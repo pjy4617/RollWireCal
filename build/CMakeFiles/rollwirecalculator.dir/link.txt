@@ -1,0 +1,2 @@
+/usr/bin/ar qc librollwirecalculator.a CMakeFiles/rollwirecalculator.dir/src/RollWireCalculator.cpp.o
+/usr/bin/ranlib librollwirecalculator.a

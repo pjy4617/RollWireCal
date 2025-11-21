@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/rollwirecalculator_test.dir/test/RollWireCalculatorTest.cpp.o -o rollwirecalculator_test  librollwirecalculator.a lib/libgtest_main.a lib/libgtest.a 
