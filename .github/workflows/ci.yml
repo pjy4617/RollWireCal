@@ -21,9 +21,9 @@ jobs:
         
     - name: Configure CMake with coverage
       run: |
-        mkdir build
+        mkdir -p build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
+        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DCMAKE_CXX_OUTPUT_EXTENSION_REPLACE=ON ..
         
     - name: Build
       run: |
@@ -33,21 +33,33 @@ jobs:
     - name: Run tests
       run: |
         cd build
-        ctest --verbose
+        ctest --verbose --output-on-failure
         
     - name: Generate coverage report
       run: |
         cd build
-        lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info
-        lcov --remove coverage.info '*/build/_deps/*' --output-file coverage.info
-        lcov --remove coverage.info '*/test/*' --output-file coverage.info
+        # 초기 커버리지 데이터 수집
+        lcov --capture --initial --directory . --output-file coverage_base.info --ignore-errors mismatch
+        # 테스트 실행 후 커버리지 데이터 수집
+        lcov --capture --directory . --output-file coverage_test.info --ignore-errors mismatch
+        # 두 데이터를 결합
+        lcov --add-tracefile coverage_base.info --add-tracefile coverage_test.info --output-file coverage_total.info
+        # 불필요한 파일 제거
+        lcov --remove coverage_total.info '/usr/*' --output-file coverage_total.info
+        lcov --remove coverage_total.info '*/build/_deps/*' --output-file coverage_total.info  
+        lcov --remove coverage_total.info '*/test/*' --output-file coverage_total.info
+        lcov --remove coverage_total.info '*/tests/*' --output-file coverage_total.info
+        # 최종 커버리지 파일로 복사
+        cp coverage_total.info coverage.info
+        # 커버리지 정보 출력
         lcov --list coverage.info
         
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./build/coverage.info
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: true
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true

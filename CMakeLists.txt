@@ -11,10 +11,31 @@ if(ENABLE_COVERAGE)
     # GCC/Clang에서 커버리지 플래그 추가
     if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         message(STATUS "Coverage enabled")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage -O0 -g")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage -O0 -g")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+        
+        # 커버리지 타겟 생성
+        find_program(LCOV_PATH lcov)
+        find_program(GENHTML_PATH genhtml)
+        
+        if(LCOV_PATH AND GENHTML_PATH)
+            add_custom_target(coverage
+                # 초기화
+                COMMAND ${LCOV_PATH} --directory . --zerocounters
+                # 테스트 실행
+                COMMAND ${CMAKE_CTEST_COMMAND} --verbose
+                # 커버리지 수집
+                COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
+                # 불필요한 파일 제거
+                COMMAND ${LCOV_PATH} --remove coverage.info '/usr/*' '*/test/*' '*/tests/*' '*/_deps/*' --output-file coverage.info
+                # HTML 리포트 생성
+                COMMAND ${GENHTML_PATH} -o coverage_html coverage.info
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Generating code coverage report"
+            )
+        endif()
     endif()
 endif()
 

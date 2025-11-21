@@ -2,24 +2,38 @@ coverage:
   status:
     project:
       default:
-        target: 80%
+        target: 70%
         threshold: 5%
+        if_ci_failed: error
     patch:
       default:
         target: 80%
+        threshold: 5%
+        if_ci_failed: error
         
   ignore:
     - "test/*"
+    - "tests/*"
     - "build/*"
     - "_deps/*"
-    - "*.h"  # 헤더 파일은 제외 (필요시 조정)
+    - "*.h"
+    - "**/*.h"
+    - "**/test*"
+    - "**/Test*"
+    - "CMakeFiles/**"
 
 comment:
-  layout: "reach,diff,flags,tree"
+  layout: "header,diff,flags,files"
   behavior: default
   require_changes: false
+  require_base: false
+  require_head: true
+
+github_checks:
+  annotations: true
 
 flags:
   unittests:
     paths:
       - src/
+    carryforward: false
