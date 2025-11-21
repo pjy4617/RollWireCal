@@ -1,5 +1,0 @@
-if(EXISTS "/home/pjy4617/Repos/RollWireCal/build/rollwirecalculator_test[1]_tests.cmake")
-  include("/home/pjy4617/Repos/RollWireCal/build/rollwirecalculator_test[1]_tests.cmake")
-else()
-  add_test(rollwirecalculator_test_NOT_BUILT rollwirecalculator_test_NOT_BUILT)
-endif()
