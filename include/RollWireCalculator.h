@@ -23,6 +23,9 @@ public:
 
     // 길이 → 회전량 변환
     double calculateRotationFromLength(double length) const;
+
+    // 회전량 → 길이 변환
+    double calculateLengthFromRotation(double rotation) const;
 };
 
 #endif // ROLLWIRECALCULATOR_H

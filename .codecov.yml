@@ -1,10 +1,13 @@
 codecov:
   require_ci_to_pass: yes
+  notify:
+    after_n_builds: 1
+    wait_for_ci: yes
   
 coverage:
   precision: 2
   round: down
-  range: "70...100"
+  range: "60...100"
   
   status:
     project:

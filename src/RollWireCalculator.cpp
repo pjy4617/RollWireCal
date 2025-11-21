@@ -58,3 +58,8 @@ double RollWireCalculator::calculateRotationFromLength(double length) const {
 
     return theta;
 }
+
+double RollWireCalculator::calculateLengthFromRotation(double rotation) const {
+    // 회전량이 0이면 길이도 0
+    return 0.0;
+}

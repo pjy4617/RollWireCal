@@ -284,3 +284,15 @@ TEST(RollWireCalculatorTest, CalculateRotationFromLengthWorksForVeryLargeLength)
     // double calculatedLength = calculator.calculateLengthFromRotation(rotation);
     // EXPECT_NEAR(veryLargeLength, calculatedLength, 0.1);  // 10cm 오차 허용
 }
+
+// Phase 3.1: 회전량 → 길이 변환 기본 동작
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationMethodExists) {
+    // calculateLengthFromRotation 메서드가 존재한다
+    RollWireCalculator calculator(1.0, 50.0);
+
+    // 메서드를 호출할 수 있으면 테스트 통과
+    double length = calculator.calculateLengthFromRotation(0.0);
+
+    // 컴파일되고 실행되면 메서드가 존재하는 것
+    SUCCEED();
+}

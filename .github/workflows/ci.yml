@@ -53,5 +53,10 @@ jobs:
         file: ./build/coverage.info
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
+        override_branch: master
+        override_commit: ${{ github.sha }}
+        override_pr: ${{ github.event.number }}
+        override_build: ${{ github.run_number }}

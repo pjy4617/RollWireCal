@@ -66,7 +66,7 @@
 ## Phase 3: 회전량 → 길이 변환 (calculateLengthFromRotation)
 
 ### 3.1 기본 동작
-- [ ] calculateLengthFromRotation 메서드가 존재한다
+- [x] calculateLengthFromRotation 메서드가 존재한다
 - [ ] 회전량이 0일 때 길이 0을 반환한다
 
 ### 3.2 단순 케이스 (1바퀴)
