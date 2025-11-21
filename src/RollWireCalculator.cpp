@@ -60,6 +60,16 @@ double RollWireCalculator::calculateRotationFromLength(double length) const {
 }
 
 double RollWireCalculator::calculateLengthFromRotation(double rotation) const {
-    // 회전량이 0이면 길이도 0
-    return 0.0;
+    // 연속 증가 모델: r(θ) = innerRadius + (θ/360) × wireThickness
+    // L = ∫[0→θ] r(t) × (2π/360) dt
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+    //
+    // 단위: rotation은 도(degree), 내부 계산은 mm, 반환은 m
+
+    double lengthMm = (2.0 * M_PI / 360.0) *
+                      (innerRadius * rotation +
+                       wireThickness * rotation * rotation / (2.0 * 360.0));
+
+    // mm → m 변환
+    return lengthMm / 1000.0;
 }
