@@ -1,5 +1,8 @@
 # Roll Wire Calculator (RollWireCal)
 
+![CI](https://github.com/pjy4617/RollWireCal/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/pjy4617/RollWireCal/branch/master/graph/badge.svg)](https://codecov.io/gh/pjy4617/RollWireCal)
+
 두께가 있는 와이어를 롤에 감을 때, 와이어 길이와 롤의 회전량 간의 상관관계를 계산하는 C++ 유틸리티 라이브러리입니다.
 
 ## 개요

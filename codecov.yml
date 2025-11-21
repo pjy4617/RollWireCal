@@ -1,0 +1,25 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 5%
+    patch:
+      default:
+        target: 80%
+        
+  ignore:
+    - "test/*"
+    - "build/*"
+    - "_deps/*"
+    - "*.h"  # 헤더 파일은 제외 (필요시 조정)
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+
+flags:
+  unittests:
+    paths:
+      - src/

@@ -4,6 +4,20 @@ project(RollWireCal)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 코드 커버리지 옵션
+option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" OFF)
+
+if(ENABLE_COVERAGE)
+    # GCC/Clang에서 커버리지 플래그 추가
+    if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(STATUS "Coverage enabled")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    endif()
+endif()
+
 # Google Test 설정
 include(FetchContent)
 FetchContent_Declare(
