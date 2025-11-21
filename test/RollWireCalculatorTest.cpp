@@ -296,3 +296,12 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationMethodExists) {
     // 컴파일되고 실행되면 메서드가 존재하는 것
     SUCCEED();
 }
+
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationReturnsZeroWhenRotationIsZero) {
+    // 회전량이 0일 때 길이 0을 반환한다
+    RollWireCalculator calculator(1.0, 50.0);
+
+    double length = calculator.calculateLengthFromRotation(0.0);
+
+    EXPECT_DOUBLE_EQ(0.0, length);
+}
