@@ -3,6 +3,7 @@ project(RollWireCal)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # 코드 커버리지 옵션
 option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" OFF)
@@ -55,6 +56,7 @@ enable_testing()
 # 소스 파일
 add_library(rollwirecalculator
   src/RollWireCalculator.cpp
+  src/SimMotor.cpp
 )
 
 target_include_directories(rollwirecalculator PUBLIC
@@ -64,6 +66,8 @@ target_include_directories(rollwirecalculator PUBLIC
 # 테스트 실행 파일
 add_executable(rollwirecalculator_test
   test/RollWireCalculatorTest.cpp
+  test/MotorTest.cpp
+  test/SimMotorTest.cpp
 )
 
 target_link_libraries(rollwirecalculator_test

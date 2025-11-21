@@ -1,0 +1,21 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureOnOpen": true,
+    "cmake.generator": "Unix Makefiles",
+    "cmake.buildArgs": [
+        "-j8"
+    ],
+    "cmake.configureArgs": [
+        "-DENABLE_COVERAGE=ON"
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+    "explorer.decorations.colors": true,
+    "explorer.decorations.badges": true,
+    "git.decorations.enabled": true,
+    "scm.decorations.enabled": true,
+    "files.exclude": {
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    }
+}

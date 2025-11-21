@@ -343,3 +343,78 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationReturnsLengthFor180Degre
 
     EXPECT_NEAR(expectedLength, length, 0.00001);  // 0.01mm 오차 허용
 }
+
+// Phase 3.3: 복잡한 케이스 (연속 증가 모델)
+TEST(RollWireCalculatorTest, CalculatesExactLengthFor180DegreesWithContinuousModel) {
+    // 180도 회전에 해당하는 정확한 와이어 길이를 계산한다
+    // 연속 증가 모델에서 반지름은 회전량에 따라 선형적으로 증가:
+    // r(θ) = innerRadius + (θ/360) × wireThickness
+    //
+    // 180도 회전의 길이:
+    // L = ∫[0→180] r(θ) × (2π/360) dθ
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]|[0→180]
+    //   = (2π/360) × [innerRadius × 180 + wireThickness × 180²/(2×360)]
+    //   = (2π/360) × [innerRadius × 180 + wireThickness × 32400/720]
+    //   = (2π/360) × [innerRadius × 180 + wireThickness × 45]
+    //   = π × innerRadius + π × wireThickness / 4
+
+    // 테스트 1: 와이어 두께 2.0mm, 내경 75mm
+    double wireThickness1 = 2.0;  // mm
+    double innerRadius1 = 75.0;   // mm
+    RollWireCalculator calculator1(wireThickness1, innerRadius1);
+
+    // 예상 길이 계산 (mm → m)
+    double expectedLength1 = (M_PI * innerRadius1 + M_PI * wireThickness1 / 4.0) / 1000.0;
+
+    double length1 = calculator1.calculateLengthFromRotation(180.0);
+
+    EXPECT_NEAR(expectedLength1, length1, 0.00001);  // 0.01mm 오차 허용
+
+    // 테스트 2: 와이어 두께 0.5mm, 내경 25mm (더 작은 값)
+    double wireThickness2 = 0.5;  // mm
+    double innerRadius2 = 25.0;   // mm
+    RollWireCalculator calculator2(wireThickness2, innerRadius2);
+
+    // 예상 길이 계산 (mm → m)
+    double expectedLength2 = (M_PI * innerRadius2 + M_PI * wireThickness2 / 4.0) / 1000.0;
+
+    double length2 = calculator2.calculateLengthFromRotation(180.0);
+
+    EXPECT_NEAR(expectedLength2, length2, 0.00001);  // 0.01mm 오차 허용
+
+    // 테스트 3: 와이어 두께 3.0mm, 내경 120mm (더 큰 값)
+    double wireThickness3 = 3.0;  // mm
+    double innerRadius3 = 120.0;  // mm
+    RollWireCalculator calculator3(wireThickness3, innerRadius3);
+
+    // 예상 길이 계산 (mm → m)
+    double expectedLength3 = (M_PI * innerRadius3 + M_PI * wireThickness3 / 4.0) / 1000.0;
+
+    double length3 = calculator3.calculateLengthFromRotation(180.0);
+
+    EXPECT_NEAR(expectedLength3, length3, 0.00001);  // 0.01mm 오차 허용
+}
+
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationReturnsLengthFor720Degrees) {
+    // 720도(2바퀴) 회전 시 연속적인 반지름 증가를 고려한 길이를 반환한다
+    // 연속 증가 모델: r(θ) = innerRadius + θ/360 × wireThickness
+    // L = ∫[0→720] r(θ) × (2π/360) dθ
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]|[0→720]
+    //   = (2π/360) × [innerRadius × 720 + wireThickness × 720²/(2×360)]
+    //   = (2π/360) × [innerRadius × 720 + wireThickness × 518400/720]
+    //   = (2π/360) × [innerRadius × 720 + wireThickness × 720]
+    //   = (2π/360) × 720 × (innerRadius + wireThickness)
+
+    double wireThickness = 2.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 720도 회전에 해당하는 예상 길이 계산 (mm → m)
+    double theta = 720.0;  // degrees
+    double expectedLength = (2.0 * M_PI / 360.0) *
+                           (innerRadius * theta + wireThickness * theta * theta / (2.0 * 360.0)) / 1000.0;
+
+    double length = calculator.calculateLengthFromRotation(720.0);
+
+    EXPECT_NEAR(expectedLength, length, 0.00001);  // 0.01mm 오차 허용
+}

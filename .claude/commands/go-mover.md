@@ -1,11 +1,11 @@
 ---
-description: Find the next unmarked test in RollWireCalculator plan.md and execute the TDD cycle
+description: Find the next unmarked test in RollWireMover plan.md and execute the TDD cycle
 ---
 
 Follow the instructions in CLAUDE.md strictly.
 
-1. Read docs/RollWireCalculator/plan.md to find the next unmarked test
-2. If docs/RollWireCalculator/plan.md doesn't exist, ask the user what feature to implement next
+1. Read docs/RollWireMover/plan.md to find the next unmarked test
+2. If docs/RollWireMover/plan.md doesn't exist, ask the user what feature to implement next
 3. Execute the complete TDD cycle for that test:
    - RED: Write a failing test for the next small increment of functionality
    - GREEN: Implement only the minimum code needed to make that test pass
@@ -18,4 +18,4 @@ Important reminders:
 - Run all tests (except long-running tests) after each step
 - Separate structural changes from behavioral changes
 - Only commit when ALL tests pass and there are NO warnings
-- Mark the test in docs/RollWireCalculator/plan.md when complete
+- Mark the test in docs/RollWireMover/plan.md when complete
