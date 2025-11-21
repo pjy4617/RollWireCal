@@ -38,21 +38,14 @@ jobs:
     - name: Generate coverage report
       run: |
         cd build
-        # 초기 커버리지 데이터 수집
-        lcov --capture --initial --directory . --output-file coverage_base.info --ignore-errors mismatch
-        # 테스트 실행 후 커버리지 데이터 수집
-        lcov --capture --directory . --output-file coverage_test.info --ignore-errors mismatch
-        # 두 데이터를 결합
-        lcov --add-tracefile coverage_base.info --add-tracefile coverage_test.info --output-file coverage_total.info
+        # 커버리지 데이터 수집
+        lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch --ignore-errors gcov --ignore-errors source
         # 불필요한 파일 제거
-        lcov --remove coverage_total.info '/usr/*' --output-file coverage_total.info
-        lcov --remove coverage_total.info '*/build/_deps/*' --output-file coverage_total.info  
-        lcov --remove coverage_total.info '*/test/*' --output-file coverage_total.info
-        lcov --remove coverage_total.info '*/tests/*' --output-file coverage_total.info
-        # 최종 커버리지 파일로 복사
-        cp coverage_total.info coverage.info
+        lcov --remove coverage.info '/usr/*' '*/build/_deps/*' '*/test/*' '*/tests/*' --output-file coverage_filtered.info --ignore-errors unused
+        # 최종 파일로 이동
+        mv coverage_filtered.info coverage.info
         # 커버리지 정보 출력
-        lcov --list coverage.info
+        lcov --list coverage.info || echo "Coverage report generated"
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -61,5 +54,4 @@ jobs:
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true

@@ -140,6 +140,28 @@ TEST(RollWireCalculatorTest, CalculateRotationFromLengthReturns180ForHalfRotatio
     EXPECT_NEAR(180.0, rotation, 0.01);  // 0.01도 오차 허용
 }
 
+TEST(RollWireCalculatorTest, CalculatesFirstRotationLengthAccurately) {
+    // 롤 내경 기준으로 첫 번째 바퀴의 길이를 정확히 계산한다
+    // 연속 증가 모델: r(θ) = innerRadius + θ/360 × wireThickness
+    // 첫 번째 바퀴(360도)의 길이:
+    // L = ∫[0→360] r(θ) × (2π/360) dθ
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]|[0→360]
+    //   = (2π/360) × [innerRadius × 360 + wireThickness × 360²/(2×360)]
+    //   = 2π × innerRadius + π × wireThickness
+
+    double wireThickness = 2.0;  // mm
+    double innerRadius = 100.0;  // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 정확히 360도에 해당하는 길이 (mm → m)
+    double lengthFor360 = (2.0 * M_PI * innerRadius + M_PI * wireThickness) / 1000.0;
+
+    double rotation = calculator.calculateRotationFromLength(lengthFor360);
+
+    // 첫 번째 바퀴의 길이를 입력하면 정확히 360도를 반환해야 함
+    EXPECT_NEAR(360.0, rotation, 0.01);
+}
+
 // Phase 2.3: 복잡한 케이스 (연속 증가 모델)
 TEST(RollWireCalculatorTest, CalculateRotationFromLengthReturnsLessThan720ForTwoRotationsWorthOfLength) {
     // 2바퀴 분량의 길이를 입력하면 720도보다 약간 작은 회전량을 반환한다
@@ -180,4 +202,85 @@ TEST(RollWireCalculatorTest, CalculateRotationFromLengthThrowsExceptionWhenLengt
     EXPECT_THROW({
         calculator.calculateRotationFromLength(-1.0);
     }, std::invalid_argument);
+}
+
+TEST(RollWireCalculatorTest, CalculatesRotationForThreeOrMoreRotationsAccurately) {
+    // 3바퀴 이상의 긴 길이에서도 정확한 회전량을 계산한다
+    // 연속 증가 모델: r(θ) = innerRadius + θ/360 × wireThickness
+    // L = ∫[0→θ] r(t) × (2π/360) dt
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 75.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 3바퀴(1080도)에 해당하는 정확한 길이 계산 (mm → m)
+    double theta = 1080.0;  // degrees
+    double lengthFor1080 = (2.0 * M_PI / 360.0) *
+                           (innerRadius * theta + wireThickness * theta * theta / (2.0 * 360.0)) / 1000.0;
+
+    double rotation = calculator.calculateRotationFromLength(lengthFor1080);
+
+    // 3바퀴의 길이를 입력하면 정확히 1080도를 반환해야 함
+    EXPECT_NEAR(1080.0, rotation, 0.1);  // 0.1도 오차 허용
+
+    // 5바퀴(1800도)도 테스트
+    theta = 1800.0;
+    double lengthFor1800 = (2.0 * M_PI / 360.0) *
+                           (innerRadius * theta + wireThickness * theta * theta / (2.0 * 360.0)) / 1000.0;
+
+    rotation = calculator.calculateRotationFromLength(lengthFor1800);
+
+    EXPECT_NEAR(1800.0, rotation, 0.1);  // 0.1도 오차 허용
+}
+
+// Phase 2.5: 경계값 테스트
+TEST(RollWireCalculatorTest, CalculateRotationFromLengthWorksForVerySmallLength) {
+    // 매우 작은 길이(0.001m)에서 올바르게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double verySmallLength = 0.001;  // meters (1mm)
+
+    // 매우 작은 길이에 대해 회전량을 계산
+    // 예상: 회전량은 매우 작아야 하며(1도 미만), 음수가 아니어야 함
+    // L = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+    // 매우 작은 θ에서는 θ² 항이 무시 가능하므로 근사적으로:
+    // L ≈ (2π/360) × innerRadius × θ
+    // θ ≈ L × 360 / (2π × innerRadius)
+    // θ ≈ 0.001 * 1000 * 360 / (2π × 50) ≈ 1.146도
+
+    double rotation = calculator.calculateRotationFromLength(verySmallLength);
+
+    EXPECT_GT(rotation, 0.0);  // 양수여야 함
+    EXPECT_LT(rotation, 2.0);  // 2도 미만이어야 함
+    EXPECT_NEAR(1.146, rotation, 0.01);  // 예상 값과 근사
+}
+
+TEST(RollWireCalculatorTest, CalculateRotationFromLengthWorksForVeryLargeLength) {
+    // 매우 큰 길이(1000m)에서 올바르게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double veryLargeLength = 1000.0;  // meters (1,000,000mm)
+
+    // 매우 큰 길이에 대해 회전량을 계산
+    // 수치적 안정성 검증: 양수이고 합리적인 범위 내에 있어야 함
+    double rotation = calculator.calculateRotationFromLength(veryLargeLength);
+
+    EXPECT_GT(rotation, 0.0);  // 양수여야 함
+    EXPECT_GT(rotation, 100000.0);  // 최소 100,000도 이상 (많은 회전)
+
+    // 결과가 유한한 값이어야 함 (수치적 안정성)
+    EXPECT_TRUE(std::isfinite(rotation));
+
+    // 합리적인 범위 검증 (대략 185,000~190,000도 예상)
+    EXPECT_LT(rotation, 200000.0);
+
+    // 역산 검증: 계산된 회전량을 다시 길이로 변환했을 때 원래 길이와 유사해야 함
+    // (calculateLengthFromRotation이 구현되면 이 부분을 활성화)
+    // double calculatedLength = calculator.calculateLengthFromRotation(rotation);
+    // EXPECT_NEAR(veryLargeLength, calculatedLength, 0.1);  // 10cm 오차 허용
 }
