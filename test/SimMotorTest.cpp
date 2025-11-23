@@ -147,3 +147,14 @@ TEST(SimMotorTest, StopMethodExists) {
     // stop() 메서드를 호출할 수 있어야 함
     simMotor.stop();
 }
+
+TEST(SimMotorTest, StopSetsRunningToFalse) {
+    // stop() 호출 시 isRunning()이 false를 반환한다
+    SimMotor simMotor;
+    
+    // stop() 호출
+    simMotor.stop();
+    
+    // running이 false여야 함
+    EXPECT_FALSE(simMotor.isRunning());
+}
