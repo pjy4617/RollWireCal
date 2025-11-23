@@ -553,3 +553,36 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationThrowsExceptionWhenRotat
         calculator.calculateLengthFromRotation(-90.0);
     }, std::invalid_argument);
 }
+
+// Phase 3.5: 경계값 테스트
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationWorksWithVerySmallRotation) {
+    // 매우 작은 회전량(0.1도)에서 올바르게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double verySmallRotation = 0.1;  // degrees
+
+    // 매우 작은 회전량에 대해 길이를 계산
+    // 연속 증가 모델: r(θ) = innerRadius + θ/360 × wireThickness
+    // L = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+    // θ가 매우 작으므로 θ² 항은 무시 가능하며, 근사적으로:
+    // L ≈ (2π/360) × innerRadius × θ
+    // L ≈ (2π/360) × 50 × 0.1 = 0.0872665 mm = 0.0000872665 m
+
+    double length = calculator.calculateLengthFromRotation(verySmallRotation);
+
+    // 양수여야 함
+    EXPECT_GT(length, 0.0);
+
+    // 예상 길이 계산 (정확한 공식 사용)
+    double theta = verySmallRotation;  // degrees
+    double expectedLength = (2.0 * M_PI / 360.0) *
+                           (innerRadius * theta + wireThickness * theta * theta / (2.0 * 360.0)) / 1000.0;
+
+    // 정확한 값과 매우 가까워야 함 (0.000001m = 0.001mm 오차 허용)
+    EXPECT_NEAR(expectedLength, length, 0.000001);
+
+    // 결과가 유한한 값이어야 함 (수치적 안정성)
+    EXPECT_TRUE(std::isfinite(length));
+}
