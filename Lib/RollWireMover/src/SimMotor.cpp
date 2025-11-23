@@ -23,7 +23,7 @@ void SimMotor::executeRotationProfile(const std::vector<double>& rotations) {
 }
 
 void SimMotor::stop() {
-    // 최소 구현 - 추후 완성 예정
+    // 실행 중단 - 현재 위치는 유지
     running = false;
 }
 
@@ -37,4 +37,34 @@ bool SimMotor::isRunning() const {
 
 void SimMotor::resetPosition() {
     currentRotation = 0.0;
+}
+
+void SimMotor::loadProfile(const std::vector<double>& rotations) {
+    // 프로파일을 로드하지만 실행하지는 않음
+    profile = rotations;
+    currentIndex = 0;
+}
+
+void SimMotor::startExecution() {
+    // 실행 시작
+    if (!profile.empty()) {
+        running = true;
+        currentIndex = 0;
+    }
+}
+
+void SimMotor::step() {
+    // 한 스텝 실행
+    if (!running || currentIndex >= profile.size()) {
+        return;
+    }
+
+    // 현재 인덱스의 회전량 적용
+    currentRotation = profile[currentIndex];
+    currentIndex++;
+
+    // 마지막 스텝이었다면 실행 종료
+    if (currentIndex >= profile.size()) {
+        running = false;
+    }
 }

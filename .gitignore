@@ -44,3 +44,4 @@
 build/
 Build/
 build*/
+Lib/*/build/

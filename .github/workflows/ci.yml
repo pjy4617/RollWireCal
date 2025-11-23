@@ -40,8 +40,8 @@ jobs:
         cd build
         # 커버리지 데이터 수집
         lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch --ignore-errors gcov --ignore-errors source
-        # 불필요한 파일 제거
-        lcov --remove coverage.info '/usr/*' '*/build/_deps/*' '*/test/*' '*/tests/*' --output-file coverage_filtered.info --ignore-errors unused
+        # 불필요한 파일 제거 (서브 디렉토리 패턴 포함)
+        lcov --remove coverage.info '/usr/*' '*/build/_deps/*' '*/test/*' '*/tests/*' '*/Lib/*/test/*' --output-file coverage_filtered.info --ignore-errors unused
         # 최종 파일로 이동
         mv coverage_filtered.info coverage.info
         # 커버리지 정보 출력

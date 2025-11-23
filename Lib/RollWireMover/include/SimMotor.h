@@ -22,6 +22,11 @@ public:
     bool isRunning() const override;
     void resetPosition() override;
 
+    // 단계별 실행을 위한 추가 메서드
+    void loadProfile(const std::vector<double>& rotations);
+    void startExecution();
+    void step();
+
 private:
     double currentRotation;                 // 현재 회전 각도 (도)
     bool running;                           // 동작 상태

@@ -626,3 +626,113 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationWorksWithVeryLargeRotati
     double relativeError = std::abs((length - expectedLength) / expectedLength);
     EXPECT_LT(relativeError, 1e-4);
 }
+
+// Phase 4.1: 길이 → 회전량 → 길이 변환
+TEST(RollWireCalculatorTest, ConvertLengthToRotationAndBackToLengthReturnsOriginalValue) {
+    // 임의의 길이를 회전량으로 변환 후 다시 길이로 변환하면 원래 값이 나온다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 임의의 길이 값 (meters)
+    double originalLength = 5.0;  // 5m
+
+    // 길이 → 회전량 변환
+    double rotation = calculator.calculateRotationFromLength(originalLength);
+
+    // 회전량 → 길이 변환 (역변환)
+    double finalLength = calculator.calculateLengthFromRotation(rotation);
+
+    // 역변환 후 원래 값과 동일해야 함 (부동소수점 오차 1mm 허용)
+    EXPECT_NEAR(originalLength, finalLength, 0.001);
+}
+
+TEST(RollWireCalculatorTest, InverseConversionIsAccurateForMultipleLengthValues) {
+    // 여러 다른 길이 값에 대해 역변환이 정확하다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이 값들을 테스트 (meters)
+    double testLengths[] = {0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 20.0, 50.0, 100.0};
+
+    for (double originalLength : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(originalLength);
+
+        // 회전량 → 길이 변환 (역변환)
+        double finalLength = calculator.calculateLengthFromRotation(rotation);
+
+        // 역변환 후 원래 값과 동일해야 함 (부동소수점 오차 1mm 허용)
+        EXPECT_NEAR(originalLength, finalLength, 0.001)
+            << "Failed for length: " << originalLength << "m";
+    }
+}
+
+TEST(RollWireCalculatorTest, InverseConversionReturnsValueWithinFloatingPointErrorRange) {
+    // 부동소수점 오차 범위 내에서 동일한 값을 반환한다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이 값들을 테스트 (meters)
+    double testLengths[] = {0.001, 0.01, 0.1, 1.0, 5.0, 10.0, 50.0, 100.0, 200.0};
+
+    for (double originalLength : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(originalLength);
+
+        // 회전량 → 길이 변환 (역변환)
+        double finalLength = calculator.calculateLengthFromRotation(rotation);
+
+        // 상대 오차 계산
+        double relativeError = std::abs((finalLength - originalLength) / originalLength);
+
+        // 상대 오차가 1e-6 (0.0001%) 이내여야 함
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed for length: " << originalLength << "m"
+            << ", relative error: " << relativeError;
+    }
+}
+
+// Phase 4.2: 회전량 → 길이 → 회전량 변환
+TEST(RollWireCalculatorTest, ConvertRotationToLengthAndBackToRotationReturnsOriginalValue) {
+    // 임의의 회전량을 길이로 변환 후 다시 회전량으로 변환하면 원래 값이 나온다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 임의의 회전량 값 (degrees)
+    double originalRotation = 1800.0;  // 5바퀴
+
+    // 회전량 → 길이 변환
+    double length = calculator.calculateLengthFromRotation(originalRotation);
+
+    // 길이 → 회전량 변환 (역변환)
+    double finalRotation = calculator.calculateRotationFromLength(length);
+
+    // 역변환 후 원래 값과 동일해야 함 (부동소수점 오차 0.01도 허용)
+    EXPECT_NEAR(originalRotation, finalRotation, 0.01);
+}
+
+TEST(RollWireCalculatorTest, InverseRotationConversionIsAccurateForMultipleRotationValues) {
+    // 여러 다른 회전량 값에 대해 역변환이 정확하다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 회전량 값들을 테스트 (degrees)
+    double testRotations[] = {10.0, 90.0, 180.0, 360.0, 720.0, 1080.0, 1800.0, 3600.0, 7200.0};
+
+    for (double originalRotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(originalRotation);
+
+        // 길이 → 회전량 변환 (역변환)
+        double finalRotation = calculator.calculateRotationFromLength(length);
+
+        // 역변환 후 원래 값과 동일해야 함 (부동소수점 오차 0.01도 허용)
+        EXPECT_NEAR(originalRotation, finalRotation, 0.01)
+            << "Failed for rotation: " << originalRotation << " degrees";
+    }
+}

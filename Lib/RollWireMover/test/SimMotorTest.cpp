@@ -151,10 +151,62 @@ TEST(SimMotorTest, StopMethodExists) {
 TEST(SimMotorTest, StopSetsRunningToFalse) {
     // stop() 호출 시 isRunning()이 false를 반환한다
     SimMotor simMotor;
-    
+
     // stop() 호출
     simMotor.stop();
-    
+
     // running이 false여야 함
     EXPECT_FALSE(simMotor.isRunning());
+}
+
+TEST(SimMotorTest, CanStopRunningProfile) {
+    // 실행 중인 프로파일을 stop()으로 중단할 수 있다
+    SimMotor simMotor;
+
+    // 프로파일 로드 (실행하지 않고 설정만)
+    std::vector<double> profile = {100.0, 200.0, 300.0, 400.0, 500.0};
+    simMotor.loadProfile(profile);
+
+    // 실행 시작
+    simMotor.startExecution();
+    EXPECT_TRUE(simMotor.isRunning());
+
+    // 한 스텝 실행
+    simMotor.step();
+    EXPECT_DOUBLE_EQ(100.0, simMotor.getCurrentRotation());
+    EXPECT_TRUE(simMotor.isRunning());  // 아직 실행 중
+
+    // 중단
+    simMotor.stop();
+    EXPECT_FALSE(simMotor.isRunning());
+    EXPECT_DOUBLE_EQ(100.0, simMotor.getCurrentRotation());  // 위치는 그대로 유지
+}
+
+TEST(SimMotorTest, StopMaintainsCurrentPosition) {
+    // stop() 호출 후 현재 위치는 중단 시점의 위치를 유지한다
+    SimMotor simMotor;
+
+    // 프로파일 로드
+    std::vector<double> profile = {90.0, 180.0, 270.0, 360.0, 450.0};
+    simMotor.loadProfile(profile);
+    simMotor.startExecution();
+
+    // 세 스텝 실행 (270도까지)
+    simMotor.step();  // 90도
+    simMotor.step();  // 180도
+    simMotor.step();  // 270도
+
+    EXPECT_DOUBLE_EQ(270.0, simMotor.getCurrentRotation());
+    EXPECT_TRUE(simMotor.isRunning());
+
+    // 중단
+    simMotor.stop();
+
+    // 위치는 중단 시점인 270도를 유지해야 함
+    EXPECT_FALSE(simMotor.isRunning());
+    EXPECT_DOUBLE_EQ(270.0, simMotor.getCurrentRotation());
+
+    // 중단 후에도 위치가 계속 유지되는지 확인
+    EXPECT_DOUBLE_EQ(270.0, simMotor.getCurrentRotation());
+    EXPECT_DOUBLE_EQ(270.0, simMotor.getCurrentRotation());
 }
