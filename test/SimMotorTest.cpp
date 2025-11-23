@@ -138,3 +138,12 @@ TEST(SimMotorTest, ProfileExecutionCompletedSetsRunningFalse) {
     // 실행이 완료되었으므로 running은 false여야 함
     EXPECT_FALSE(simMotor.isRunning());
 }
+
+// Phase 1.5: 모터 정지 기능
+TEST(SimMotorTest, StopMethodExists) {
+    // stop() 메서드가 존재한다
+    SimMotor simMotor;
+    
+    // stop() 메서드를 호출할 수 있어야 함
+    simMotor.stop();
+}

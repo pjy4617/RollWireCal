@@ -44,7 +44,7 @@
 - [✓] executeRotationProfile() 완료 후에는 isRunning()이 false를 반환한다
 
 ### 1.5 SimMotor 모터 정지
-- [ ] stop() 메서드가 존재한다
+- [✓] stop() 메서드가 존재한다
 - [ ] stop() 호출 시 isRunning()이 false를 반환한다
 - [ ] 실행 중인 프로파일을 stop()으로 중단할 수 있다
 - [ ] stop() 호출 후 현재 위치는 중단 시점의 위치를 유지한다
