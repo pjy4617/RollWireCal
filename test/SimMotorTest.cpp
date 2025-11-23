@@ -114,3 +114,27 @@ TEST(SimMotorTest, ExecuteSingleValueProfileSetsRotationTo360) {
     // 현재 회전 위치가 360도가 되어야 함
     EXPECT_DOUBLE_EQ(360.0, simMotor.getCurrentRotation());
 }
+
+TEST(SimMotorTest, ExecuteMultiValueProfileSetsRotationToLastValue) {
+    // 다중 값 배열 [90.0, 180.0, 270.0]을 전달하면 마지막 값(270도)이 현재 위치가 된다
+    SimMotor simMotor;
+
+    // 다중 값 배열 실행
+    std::vector<double> profile = {90.0, 180.0, 270.0};
+    simMotor.executeRotationProfile(profile);
+
+    // 현재 회전 위치가 마지막 값인 270도가 되어야 함
+    EXPECT_DOUBLE_EQ(270.0, simMotor.getCurrentRotation());
+}
+
+TEST(SimMotorTest, ProfileExecutionCompletedSetsRunningFalse) {
+    // executeRotationProfile() 완료 후에는 isRunning()이 false를 반환한다
+    SimMotor simMotor;
+
+    // 프로파일 실행
+    std::vector<double> profile = {180.0};
+    simMotor.executeRotationProfile(profile);
+    
+    // 실행이 완료되었으므로 running은 false여야 함
+    EXPECT_FALSE(simMotor.isRunning());
+}

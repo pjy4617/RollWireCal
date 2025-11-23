@@ -10,10 +10,15 @@ void SimMotor::executeRotationProfile(const std::vector<double>& rotations) {
         return;
     }
 
-    // 프로파일 저장 및 마지막 회전 위치로 이동
-    // 현재는 즉시 완료되는 단순 구현
+    // 프로파일 저장 및 실행 시작
     profile = rotations;
+    running = true;  // 실행 중 상태로 설정
+    
+    // 프로파일 실행 (현재는 동기적으로 즉시 완료)
+    // TODO: 향후 비동기 또는 단계별 실행으로 변경 필요
     currentRotation = rotations.back();
+    
+    // 실행 완료 후 정지 상태로 변경
     running = false;
 }
 
