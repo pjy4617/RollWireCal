@@ -12,26 +12,29 @@
  */
 class SimMotor : public Motor {
 public:
-    // 생성자
-    SimMotor();
+  // 생성자
+  SimMotor();
 
-    // Motor 인터페이스 구현
-    void executeRotationProfile(const std::vector<double>& rotations) override;
-    void stop() override;
-    double getCurrentRotation() const override;
-    bool isRunning() const override;
-    void resetPosition() override;
+  // Motor 인터페이스 구현
+  void executeRotationProfile(const std::vector<double> &rotations) override;
+  void stop() override;
+  double getCurrentRotation() const override;
+  bool isRunning() const override;
+  void resetPosition() override;
 
-    // 단계별 실행을 위한 추가 메서드
-    void loadProfile(const std::vector<double>& rotations);
-    void startExecution();
-    void step();
+  // 단계별 실행을 위한 추가 메서드
+  void loadProfile(const std::vector<double> &rotations);
+  void startExecution();
+  void step();
+
+  // 테스트용 메서드
+  const std::vector<double> &getLastProfile() const;
 
 private:
-    double currentRotation;                 // 현재 회전 각도 (도)
-    bool running;                           // 동작 상태
-    std::vector<double> profile;            // 실행 중인 프로파일
-    size_t currentIndex;                    // 현재 실행 인덱스
+  double currentRotation;      // 현재 회전 각도 (도)
+  bool running;                // 동작 상태
+  std::vector<double> profile; // 실행 중인 프로파일
+  size_t currentIndex;         // 현재 실행 인덱스
 };
 
 #endif // SIMMOTOR_H

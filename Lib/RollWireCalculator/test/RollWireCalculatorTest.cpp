@@ -736,3 +736,290 @@ TEST(RollWireCalculatorTest, InverseRotationConversionIsAccurateForMultipleRotat
             << "Failed for rotation: " << originalRotation << " degrees";
     }
 }
+
+TEST(RollWireCalculatorTest, InverseRotationConversionReturnsValueWithinFloatingPointErrorRange) {
+    // 부동소수점 오차 범위 내에서 동일한 값을 반환한다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 회전량 값들을 테스트 (degrees)
+    double testRotations[] = {1.0, 10.0, 90.0, 180.0, 360.0, 720.0, 1800.0, 3600.0, 10800.0};
+
+    for (double originalRotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(originalRotation);
+
+        // 길이 → 회전량 변환 (역변환)
+        double finalRotation = calculator.calculateRotationFromLength(length);
+
+        // 상대 오차 계산
+        double relativeError = std::abs((finalRotation - originalRotation) / originalRotation);
+
+        // 상대 오차가 1e-6 (0.0001%) 이내여야 함
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed for rotation: " << originalRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+// Phase 5.1: 실용적 케이스
+TEST(RollWireCalculatorTest, CalculatesRotationFor10mLengthWith1mmWireAnd50mmInnerRadius) {
+    // 와이어 두께 1mm, 롤 내경 50mm일 때 10m 길이의 회전량을 계산한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double length = 10.0;  // meters
+
+    // 길이 → 회전량 변환
+    double rotation = calculator.calculateRotationFromLength(length);
+
+    // 회전량이 양수여야 함
+    EXPECT_GT(rotation, 0.0);
+
+    // 역변환으로 검증
+    double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+    EXPECT_NEAR(length, verifiedLength, 0.001);  // 1mm 오차 허용
+}
+
+TEST(RollWireCalculatorTest, CalculatesLengthFor1080DegreesRotationWith2mmWireAnd100mmInnerRadius) {
+    // 와이어 두께 2mm, 롤 내경 100mm일 때 1080도 회전의 길이를 계산한다
+    double wireThickness = 2.0;   // mm
+    double innerRadius = 100.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double rotation = 1080.0;  // degrees (3 rotations)
+
+    // 회전량 → 길이 변환
+    double length = calculator.calculateLengthFromRotation(rotation);
+
+    // 길이가 양수여야 함
+    EXPECT_GT(length, 0.0);
+
+    // 역변환으로 검증
+    double verifiedRotation = calculator.calculateRotationFromLength(length);
+    EXPECT_NEAR(rotation, verifiedRotation, 0.01);  // 0.01도 오차 허용
+}
+
+TEST(RollWireCalculatorTest, VerifiesInverseConversionWith0_5mmWireAnd25mmInnerRadius) {
+    // 와이어 두께 0.5mm, 롤 내경 25mm일 때 역변환을 검증한다
+    double wireThickness = 0.5;  // mm
+    double innerRadius = 25.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 여러 테스트 케이스로 역변환 검증
+    std::vector<double> testLengths = {0.5, 1.0, 5.0, 10.0, 50.0};  // meters
+
+    for (double originalLength : testLengths) {
+        // 길이 → 회전량 → 길이 변환
+        double rotation = calculator.calculateRotationFromLength(originalLength);
+        double convertedLength = calculator.calculateLengthFromRotation(rotation);
+
+        // 원래 길이와 변환된 길이가 일치해야 함
+        double relativeError = std::abs(convertedLength - originalLength) / originalLength;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed for length: " << originalLength << " meters"
+            << ", rotation: " << rotation << " degrees"
+            << ", converted length: " << convertedLength << " meters"
+            << ", relative error: " << relativeError;
+    }
+
+    // 여러 회전량으로도 역변환 검증
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0, 3600.0};  // degrees
+
+    for (double originalRotation : testRotations) {
+        // 회전량 → 길이 → 회전량 변환
+        double length = calculator.calculateLengthFromRotation(originalRotation);
+        double convertedRotation = calculator.calculateRotationFromLength(length);
+
+        // 원래 회전량과 변환된 회전량이 일치해야 함
+        double relativeError = std::abs(convertedRotation - originalRotation) / originalRotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed for rotation: " << originalRotation << " degrees"
+            << ", length: " << length << " meters"
+            << ", converted rotation: " << convertedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+TEST(RollWireCalculatorTest, CalculatesDifferentRotationAfterInnerRadiusChange) {
+    // 롤 내경 변경 후 같은 길이에 대해 다른 회전량이 계산되는지 확인한다
+    double wireThickness = 1.0;   // mm
+    double initialInnerRadius = 50.0;  // mm
+    RollWireCalculator calculator(wireThickness, initialInnerRadius);
+
+    double testLength = 5.0;  // meters
+
+    // 초기 내경에서 회전량 계산
+    double rotation1 = calculator.calculateRotationFromLength(testLength);
+    EXPECT_GT(rotation1, 0.0);
+
+    // 롤 내경을 변경
+    double newInnerRadius = 100.0;  // mm
+    calculator.setInnerRadius(newInnerRadius);
+
+    // 변경된 내경 확인
+    EXPECT_DOUBLE_EQ(newInnerRadius, calculator.getInnerRadius());
+
+    // 같은 길이에 대해 다시 회전량 계산
+    double rotation2 = calculator.calculateRotationFromLength(testLength);
+    EXPECT_GT(rotation2, 0.0);
+
+    // 내경이 커졌으므로 같은 길이에 대해 회전량은 작아져야 함
+    EXPECT_LT(rotation2, rotation1)
+        << "With larger inner radius (" << newInnerRadius << "mm vs " << initialInnerRadius 
+        << "mm), rotation should be less for the same length (" << testLength << "m)"
+        << ". Got rotation1=" << rotation1 << ", rotation2=" << rotation2;
+
+    // 내경을 더 작게 변경
+    double smallerInnerRadius = 25.0;  // mm
+    calculator.setInnerRadius(smallerInnerRadius);
+
+    // 같은 길이에 대해 다시 회전량 계산
+    double rotation3 = calculator.calculateRotationFromLength(testLength);
+    EXPECT_GT(rotation3, 0.0);
+
+    // 내경이 작아졌으므로 회전량은 커져야 함
+    EXPECT_GT(rotation3, rotation1)
+        << "With smaller inner radius (" << smallerInnerRadius << "mm vs " << initialInnerRadius 
+        << "mm), rotation should be more for the same length (" << testLength << "m)"
+        << ". Got rotation1=" << rotation1 << ", rotation3=" << rotation3;
+}
+
+// Phase 5.2: 극단적 케이스
+TEST(RollWireCalculatorTest, WorksAccuratelyWithVeryThinWire) {
+    // 매우 얇은 와이어(0.1mm)에서 정확하게 동작한다
+    double wireThickness = 0.1;  // mm - very thin wire
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이에서 테스트
+    std::vector<double> testLengths = {0.5, 1.0, 5.0, 10.0};  // meters
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+        EXPECT_GT(rotation, 0.0)
+            << "Rotation should be positive for length: " << length << "m";
+
+        // 역변환으로 검증
+        double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+        double relativeError = std::abs(verifiedLength - length) / length;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", verified length: " << verifiedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 회전량에서 테스트
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0};  // degrees
+
+    for (double rotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(rotation);
+        EXPECT_GT(length, 0.0)
+            << "Length should be positive for rotation: " << rotation << " degrees";
+
+        // 역변환으로 검증
+        double verifiedRotation = calculator.calculateRotationFromLength(length);
+        double relativeError = std::abs(verifiedRotation - rotation) / rotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for rotation: " << rotation << " degrees"
+            << ", length: " << length << "m"
+            << ", verified rotation: " << verifiedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+TEST(RollWireCalculatorTest, WorksAccuratelyWithVeryThickWire) {
+    // 매우 두꺼운 와이어(10mm)에서 정확하게 동작한다
+    double wireThickness = 10.0;  // mm - very thick wire
+    double innerRadius = 100.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이에서 테스트
+    std::vector<double> testLengths = {0.5, 1.0, 5.0, 10.0};  // meters
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+        EXPECT_GT(rotation, 0.0)
+            << "Rotation should be positive for length: " << length << "m";
+
+        // 역변환으로 검증
+        double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+        double relativeError = std::abs(verifiedLength - length) / length;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", verified length: " << verifiedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 회전량에서 테스트
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0};  // degrees
+
+    for (double rotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(rotation);
+        EXPECT_GT(length, 0.0)
+            << "Length should be positive for rotation: " << rotation << " degrees";
+
+        // 역변환으로 검증
+        double verifiedRotation = calculator.calculateRotationFromLength(length);
+        double relativeError = std::abs(verifiedRotation - rotation) / rotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for rotation: " << rotation << " degrees"
+            << ", length: " << length << "m"
+            << ", verified rotation: " << verifiedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+
+TEST(RollWireCalculatorTest, WorksAccuratelyWithSmallRoll) {
+    // 작은 롤(10mm 내경)에서 정확하게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 10.0;   // mm - very small roll
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이에서 테스트
+    std::vector<double> testLengths = {0.1, 0.5, 1.0, 5.0};  // meters
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+        EXPECT_GT(rotation, 0.0)
+            << "Rotation should be positive for length: " << length << "m";
+
+        // 역변환으로 검증
+        double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+        double relativeError = std::abs(verifiedLength - length) / length;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", verified length: " << verifiedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 회전량에서 테스트
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0};  // degrees
+
+    for (double rotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(rotation);
+        EXPECT_GT(length, 0.0)
+            << "Length should be positive for rotation: " << rotation << " degrees";
+
+        // 역변환으로 검증
+        double verifiedRotation = calculator.calculateRotationFromLength(length);
+        double relativeError = std::abs(verifiedRotation - rotation) / rotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for rotation: " << rotation << " degrees"
+            << ", length: " << length << "m"
+            << ", verified rotation: " << verifiedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}

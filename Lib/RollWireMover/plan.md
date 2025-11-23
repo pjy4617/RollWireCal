@@ -54,81 +54,82 @@
 ## Phase 2: RollWireMover 기본 구조
 
 ### 2.1 클래스 생성 및 초기화 (의존성 주입)
-- [ ] RollWireMover 클래스를 생성할 수 있다
-- [ ] wireThickness, innerRadius, Motor 포인터, ErrorCode& 출력 파라미터를 받는 생성자가 있다
-- [ ] 생성 시 내부적으로 RollWireCalculator 객체가 생성된다
-- [ ] 생성 시 Motor 포인터를 멤버 변수에 저장한다 (의존성 주입)
-- [ ] Motor 포인터가 nullptr일 때 ErrorCode::INVALID_MOTOR_POINTER를 반환한다
-- [ ] wireThickness가 0일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
-- [ ] wireThickness가 음수일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
-- [ ] innerRadius가 0일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
-- [ ] innerRadius가 음수일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
-- [ ] 모든 파라미터가 유효할 때 ErrorCode::SUCCESS를 반환한다
+- [✓] RollWireMover 클래스를 생성할 수 있다
+- [✓] wireThickness, innerRadius, Motor 포인터, ErrorCode& 출력 파라미터를 받는 생성자가 있다
+- [✓] 생성 시 내부적으로 RollWireCalculator 객체가 생성된다
+- [✓] 생성 시 Motor 포인터를 멤버 변수에 저장한다 (의존성 주입)
+- [✓] Motor 포인터가 nullptr일 때 ErrorCode::INVALID_MOTOR_POINTER를 반환한다
+- [✓] wireThickness가 0일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
+- [✓] wireThickness가 음수일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
+- [✓] innerRadius가 0일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [✓] innerRadius가 음수일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [✓] 모든 파라미터가 유효할 때 ErrorCode::SUCCESS를 반환한다
 
 ### 2.2 초기 상태
-- [ ] 초기 현재 위치는 0이다 (완전히 올린 상태)
-- [ ] 초기 상태는 STOPPED이다
-- [ ] 초기 최대 와이어 길이는 5.0m이다
-- [ ] isMoving()은 초기에 false를 반환한다
+- [✓] 초기 현재 위치는 0이다 (완전히 올린 상태)
+- [✓] 초기 상태는 STOPPED이다
+- [✓] 초기 최대 와이어 길이는 5.0m이다
+- [✓] isMoving()은 초기에 false를 반환한다
 
 ### 2.3 모션 파라미터 설정
-- [ ] setAccelerationTime() 메서드로 가속 시간을 설정할 수 있다 (ErrorCode 반환)
-- [ ] setConstantVelocity() 메서드로 정속 속도를 설정할 수 있다 (ErrorCode 반환)
-- [ ] setDecelerationTime() 메서드로 감속 시간을 설정할 수 있다 (ErrorCode 반환)
-- [ ] setAccelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_ACCELERATION_TIME을 반환한다
-- [ ] setDecelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_DECELERATION_TIME을 반환한다
-- [ ] setConstantVelocity()에 MIN_VELOCITY(0.01) 미만 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
-- [ ] setConstantVelocity()에 MAX_VELOCITY(1.0) 초과 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
-- [ ] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
+- [✓] setAccelerationTime() 메서드로 가속 시간을 설정할 수 있다 (ErrorCode 반환)
+- [✓] setConstantVelocity() 메서드로 정속 속도를 설정할 수 있다 (ErrorCode 반환)
+- [✓] setDecelerationTime() 메서드로 감속 시간을 설정할 수 있다 (ErrorCode 반환)
+- [✓] setAccelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_ACCELERATION_TIME을 반환한다
+- [✓] setDecelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_DECELERATION_TIME을 반환한다
+- [✓] setConstantVelocity()에 MIN_VELOCITY(0.01) 미만 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
+- [✓] setConstantVelocity()에 MAX_VELOCITY(1.0) 초과 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
+- [✓] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
 
 ### 2.4 시스템 설정
-- [ ] setMaxWireLength() 메서드로 최대 와이어 길이를 설정할 수 있다 (ErrorCode 반환)
-- [ ] setMaxWireLength()에 0 이하 값을 전달하면 ErrorCode::INVALID_MAX_LENGTH를 반환한다
-- [ ] setInnerRadius() 메서드로 롤 내경을 변경할 수 있다 (ErrorCode 반환)
-- [ ] setInnerRadius()에 0 이하 값을 전달하면 ErrorCode::INVALID_INNER_RADIUS를 반환한다
-- [ ] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
+- [✓] setMaxWireLength() 메서드로 최대 와이어 길이를 설정할 수 있다 (ErrorCode 반환)
+- [✓] setMaxWireLength()에 0 이하 값을 전달하면 ErrorCode::INVALID_MAX_LENGTH를 반환한다
+- [✓] setInnerRadius() 메서드로 롤 내경을 변경할 수 있다 (ErrorCode 반환)
+- [✓] setInnerRadius()에 0 이하 값을 전달하면 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [✓] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
 
 ### 2.5 상태 조회
-- [ ] getCurrentPosition() 메서드로 현재 와이어 위치를 조회할 수 있다
-- [ ] getCurrentState() 메서드로 현재 모션 상태를 조회할 수 있다
-- [ ] isMoving() 메서드로 이동 중 여부를 조회할 수 있다
+- [✓] getCurrentPosition() 메서드로 현재 와이어 위치를 조회할 수 있다
+- [✓] getCurrentState() 메서드로 현재 모션 상태를 조회할 수 있다
+- [✓] isMoving() 메서드로 이동 중 여부를 조회할 수 있다
 
 ### 2.6 속도 프로파일 타입 설정
-- [ ] setVelocityProfile() 메서드가 존재한다
-- [ ] TRAPEZOID 프로파일 타입을 설정할 수 있다
-- [ ] S_CURVE 프로파일 타입을 설정할 수 있다
+- [✓] setVelocityProfile() 메서드가 존재한다
+- [✓] TRAPEZOID 프로파일 타입을 설정할 수 있다
+- [✓] S_CURVE 프로파일 타입을 설정할 수 있다
 
 ---
 
 ## Phase 3: 이동 제어 - 기본 동작
 
 ### 3.1 상대 이동 - 범위 검증
-- [ ] moveRelative() 메서드가 존재한다 (ErrorCode 반환)
-- [ ] moveRelative(0)을 호출하면 위치가 변하지 않고 ErrorCode::SUCCESS를 반환한다
-- [ ] moveRelative()로 음수 거리를 전달하면 올리는 동작을 시도한다 (현재 위치 감소)
-- [ ] moveRelative()로 양수 거리를 전달하면 내리는 동작을 시도한다 (현재 위치 증가)
-- [ ] 위치 0에서 moveRelative(-1.0)을 호출하면 ErrorCode::OUT_OF_RANGE를 반환한다
-- [ ] 위치 4.0에서 moveRelative(2.0)을 호출하면 (maxLength=5.0) ErrorCode::OUT_OF_RANGE를 반환한다
-- [ ] 유효한 범위 내 이동 시 ErrorCode::SUCCESS를 반환한다
+- [✓] moveRelative() 메서드가 존재한다 (ErrorCode 반환)
+- [✓] moveRelative(0)을 호출하면 위치가 변하지 않고 ErrorCode::SUCCESS를 반환한다
+- [✓] moveRelative()로 음수 거리를 전달하면 올리는 동작을 시도한다 (현재 위치 감소)
+
+- [✓] moveRelative()로 양수 거리를 전달하면 내리는 동작을 시도한다 (현재 위치 증가)
+- [✓] 위치 0에서 moveRelative(-1.0)을 호출하면 ErrorCode::OUT_OF_RANGE를 반환한다
+- [✓] 위치 4.0에서 moveRelative(2.0)을 호출하면 (maxLength=5.0) ErrorCode::OUT_OF_RANGE를 반환한다
+- [✓] 유효한 범위 내 이동 시 ErrorCode::SUCCESS를 반환한다
 
 ### 3.2 절대 이동 - 범위 검증
-- [ ] moveAbsolute() 메서드가 존재한다 (ErrorCode 반환)
-- [ ] moveAbsolute(0)을 호출하면 위치 0으로 이동하고 ErrorCode::SUCCESS를 반환한다 (완전히 올림)
-- [ ] moveAbsolute(maxWireLength)를 호출하면 최대 길이 위치로 이동하고 ErrorCode::SUCCESS를 반환한다
-- [ ] moveAbsolute()에 음수를 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
-- [ ] moveAbsolute()에 maxWireLength를 초과하는 값을 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
-- [ ] moveAbsolute()는 내부적으로 moveRelative()를 호출한다
+- [✓] moveTo() 메서드가 존재한다 (ErrorCode 반환)
+- [✓] moveTo(0)을 호출하면 위치 0으로 이동하고 ErrorCode::SUCCESS를 반환한다 (완전히 올림)
+- [✓] moveTo(maxWireLength)를 호출하면 최대 길이 위치로 이동하고 ErrorCode::SUCCESS를 반환한다
+- [✓] moveTo()에 음수를 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
+- [✓] moveTo()에 maxWireLength를 초과하는 값을 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
+- [✓] moveRelative()는 내부적으로 moveTo()를 호출한다
 
 ---
 
 ## Phase 4: Trapezoid 속도 프로파일
 
 ### 4.1 단순 Trapezoid 프로파일 생성
-- [ ] 프로파일 타입을 TRAPEZOID로 설정한다
-- [ ] 가속 시간 0.1초, 정속 속도 0.1 m/s, 감속 시간 0.1초로 설정한다
-- [ ] 매우 짧은 거리(0.01m) 이동 시 속도 프로파일이 생성된다
-- [ ] 생성된 프로파일의 최대 속도는 constantVelocity 이하이다
-- [ ] 프로파일의 시작 속도는 0이다
+- [✓] 프로파일 타입을 TRAPEZOID로 설정한다
+- [✓] 가속 시간 0.1초, 정속 속도 0.1 m/s, 감속 시간 0.1초로 설정한다
+- [✓] 매우 짧은 거리(0.01m) 이동 시 속도 프로파일이 생성된다
+- [✓] 생성된 프로파일의 최대 속도는 constantVelocity 이하이다
+- [✓] 프로파일의 시작 속도는 0이다
 - [ ] 프로파일의 종료 속도는 0이다
 
 ### 4.2 Trapezoid 프로파일 - 가속 구간
