@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <cmath>
+#include <chrono>
 #include "RollWireCalculator.h"
 
 // Phase 1.1: RollWireCalculator 클래스 생성
@@ -1022,4 +1023,353 @@ TEST(RollWireCalculatorTest, WorksAccuratelyWithSmallRoll) {
             << ", verified rotation: " << verifiedRotation << " degrees"
             << ", relative error: " << relativeError;
     }
+}
+
+TEST(RollWireCalculatorTest, WorksAccuratelyWithLargeRoll) {
+    // 큰 롤(500mm 내경)에서 정확하게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 500.0;   // mm - very large roll
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이에서 테스트
+    std::vector<double> testLengths = {1.0, 5.0, 10.0, 50.0, 100.0};  // meters
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+        EXPECT_GT(rotation, 0.0)
+            << "Rotation should be positive for length: " << length << "m";
+
+        // 역변환으로 검증
+        double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+        double relativeError = std::abs(verifiedLength - length) / length;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", verified length: " << verifiedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 회전량에서 테스트
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0, 3600.0};  // degrees
+
+    for (double rotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(rotation);
+        EXPECT_GT(length, 0.0)
+            << "Length should be positive for rotation: " << rotation << " degrees";
+
+        // 역변환으로 검증
+        double verifiedRotation = calculator.calculateRotationFromLength(length);
+        double relativeError = std::abs(verifiedRotation - rotation) / rotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for rotation: " << rotation << " degrees"
+            << ", length: " << length << "m"
+            << ", verified rotation: " << verifiedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+TEST(RollWireCalculatorTest, WorksAccuratelyWhenWireThicknessIsGreaterThanInnerRadius) {
+    // 와이어 두께가 롤 내경보다 클 때 정확하게 동작한다
+    double wireThickness = 10.0;  // mm - 와이어가 롤 내경보다 두꺼움
+    double innerRadius = 5.0;     // mm - 롤 내경이 와이어 두께보다 작음
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 길이에서 테스트
+    std::vector<double> testLengths = {0.5, 1.0, 2.0, 5.0};  // meters
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+        EXPECT_GT(rotation, 0.0)
+            << "Rotation should be positive for length: " << length << "m";
+
+        // 역변환으로 검증
+        double verifiedLength = calculator.calculateLengthFromRotation(rotation);
+        double relativeError = std::abs(verifiedLength - length) / length;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", verified length: " << verifiedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 회전량에서 테스트
+    std::vector<double> testRotations = {180.0, 360.0, 720.0, 1800.0};  // degrees
+
+    for (double rotation : testRotations) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(rotation);
+        EXPECT_GT(length, 0.0)
+            << "Length should be positive for rotation: " << rotation << " degrees";
+
+        // 역변환으로 검증
+        double verifiedRotation = calculator.calculateRotationFromLength(length);
+        double relativeError = std::abs(verifiedRotation - rotation) / rotation;
+        EXPECT_LT(relativeError, 1e-6)
+            << "Failed inverse conversion for rotation: " << rotation << " degrees"
+            << ", length: " << length << "m"
+            << ", verified rotation: " << verifiedRotation << " degrees"
+            << ", relative error: " << relativeError;
+    }
+}
+
+// Phase 6.1: 정밀도 테스트
+TEST(RollWireCalculatorTest, FloatingPointErrorIsWithinAcceptableRange) {
+    // 부동소수점 연산 오차가 허용 범위(1e-6) 내에 있다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 다양한 회전량에 대해 이론적 값과 실제 계산 값 비교
+    std::vector<double> testRotations = {90.0, 180.0, 360.0, 720.0, 1080.0, 1800.0, 3600.0};
+
+    for (double rotation : testRotations) {
+        // 이론적 길이 계산 (정확한 공식 사용)
+        // L = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+        double expectedLength = (2.0 * M_PI / 360.0) *
+                               (innerRadius * rotation +
+                                wireThickness * rotation * rotation / (2.0 * 360.0)) / 1000.0;
+
+        // 실제 계산 값
+        double actualLength = calculator.calculateLengthFromRotation(rotation);
+
+        // 상대 오차 계산
+        double relativeError = std::abs(actualLength - expectedLength) / expectedLength;
+
+        // 상대 오차가 1e-6 이내여야 함
+        EXPECT_LT(relativeError, 1e-6)
+            << "Floating point error too large for rotation: " << rotation << " degrees"
+            << ", expected: " << expectedLength << "m"
+            << ", actual: " << actualLength << "m"
+            << ", relative error: " << relativeError;
+    }
+
+    // 다양한 길이에 대해 역변환 정밀도 검증
+    std::vector<double> testLengths = {0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 20.0, 50.0};
+
+    for (double length : testLengths) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(length);
+
+        // 회전량 → 길이 역변환
+        double convertedLength = calculator.calculateLengthFromRotation(rotation);
+
+        // 상대 오차 계산
+        double relativeError = std::abs(convertedLength - length) / length;
+
+        // 상대 오차가 1e-6 이내여야 함
+        EXPECT_LT(relativeError, 1e-6)
+            << "Floating point error too large for length: " << length << "m"
+            << ", rotation: " << rotation << " degrees"
+            << ", converted length: " << convertedLength << "m"
+            << ", relative error: " << relativeError;
+    }
+}
+
+TEST(RollWireCalculatorTest, ErrorDoesNotAccumulateInRepeatedCalculations) {
+    // 반복 계산 시 오차가 누적되지 않는다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 테스트 1: 길이 → 회전량 → 길이 변환을 여러 번 반복
+    double initialLength = 5.0;  // meters
+    double currentValue = initialLength;
+    const int iterations = 100;
+
+    for (int i = 0; i < iterations; ++i) {
+        // 길이 → 회전량 변환
+        double rotation = calculator.calculateRotationFromLength(currentValue);
+        
+        // 회전량 → 길이 변환
+        currentValue = calculator.calculateLengthFromRotation(rotation);
+    }
+
+    // 반복 후에도 원래 값과의 오차가 허용 범위 내에 있어야 함
+    double finalError = std::abs(currentValue - initialLength) / initialLength;
+    EXPECT_LT(finalError, 1e-5)  // 반복 계산 후에도 1e-5 이내
+        << "Error accumulated after " << iterations << " iterations"
+        << ", initial length: " << initialLength << "m"
+        << ", final length: " << currentValue << "m"
+        << ", relative error: " << finalError;
+
+    // 테스트 2: 회전량 → 길이 → 회전량 변환을 여러 번 반복
+    double initialRotation = 1800.0;  // degrees
+    currentValue = initialRotation;
+
+    for (int i = 0; i < iterations; ++i) {
+        // 회전량 → 길이 변환
+        double length = calculator.calculateLengthFromRotation(currentValue);
+        
+        // 길이 → 회전량 변환
+        currentValue = calculator.calculateRotationFromLength(length);
+    }
+
+    // 반복 후에도 원래 값과의 오차가 허용 범위 내에 있어야 함
+    finalError = std::abs(currentValue - initialRotation) / initialRotation;
+    EXPECT_LT(finalError, 1e-5)  // 반복 계산 후에도 1e-5 이내
+        << "Error accumulated after " << iterations << " iterations"
+        << ", initial rotation: " << initialRotation << " degrees"
+        << ", final rotation: " << currentValue << " degrees"
+        << ", relative error: " << finalError;
+
+    // 테스트 3: 다양한 초기값에 대해 반복 계산 검증
+    std::vector<double> testLengths = {0.5, 1.0, 2.5, 10.0, 50.0};
+    
+    for (double testLength : testLengths) {
+        double testValue = testLength;
+        
+        for (int i = 0; i < 50; ++i) {
+            double rotation = calculator.calculateRotationFromLength(testValue);
+            testValue = calculator.calculateLengthFromRotation(rotation);
+        }
+        
+        double error = std::abs(testValue - testLength) / testLength;
+        EXPECT_LT(error, 1e-5)
+            << "Error accumulated for initial length: " << testLength << "m"
+            << ", final length: " << testValue << "m"
+            << ", relative error: " << error;
+    }
+}
+
+// Phase 6.2: 성능 테스트
+TEST(RollWireCalculatorTest, SingleCalculationCompletesWithin1ms) {
+    // 단일 계산이 1ms 이내에 완료된다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 테스트 1: calculateLengthFromRotation 성능
+    double rotation = 1800.0;  // degrees
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    double length = calculator.calculateLengthFromRotation(rotation);
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    double durationMs = duration.count() / 1000.0;
+    
+    EXPECT_LT(durationMs, 1.0)
+        << "calculateLengthFromRotation took " << durationMs << "ms, expected < 1ms";
+    
+    // 결과가 유효한지 확인
+    EXPECT_GT(length, 0.0);
+
+    // 테스트 2: calculateRotationFromLength 성능
+    double testLength = 5.0;  // meters
+    
+    start = std::chrono::high_resolution_clock::now();
+    double calculatedRotation = calculator.calculateRotationFromLength(testLength);
+    end = std::chrono::high_resolution_clock::now();
+    
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    durationMs = duration.count() / 1000.0;
+    
+    EXPECT_LT(durationMs, 1.0)
+        << "calculateRotationFromLength took " << durationMs << "ms, expected < 1ms";
+    
+    // 결과가 유효한지 확인
+    EXPECT_GT(calculatedRotation, 0.0);
+
+    // 테스트 3: 다양한 입력값에 대해 성능 검증
+    std::vector<double> testRotations = {90.0, 360.0, 720.0, 1800.0, 3600.0};
+    
+    for (double rot : testRotations) {
+        start = std::chrono::high_resolution_clock::now();
+        double len = calculator.calculateLengthFromRotation(rot);
+        end = std::chrono::high_resolution_clock::now();
+        
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        durationMs = duration.count() / 1000.0;
+        
+        EXPECT_LT(durationMs, 1.0)
+            << "calculateLengthFromRotation(" << rot << ") took " << durationMs << "ms, expected < 1ms";
+        EXPECT_GT(len, 0.0);
+    }
+
+    std::vector<double> testLengths = {0.1, 1.0, 5.0, 10.0, 50.0};
+    
+    for (double len : testLengths) {
+        start = std::chrono::high_resolution_clock::now();
+        double rot = calculator.calculateRotationFromLength(len);
+        end = std::chrono::high_resolution_clock::now();
+        
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        durationMs = duration.count() / 1000.0;
+        
+        EXPECT_LT(durationMs, 1.0)
+            << "calculateRotationFromLength(" << len << ") took " << durationMs << "ms, expected < 1ms";
+        EXPECT_GT(rot, 0.0);
+    }
+}
+
+TEST(RollWireCalculatorTest, ThousandCalculationsCompleteWithin100ms) {
+    // 1000회 연속 계산이 100ms 이내에 완료된다
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 테스트 1: calculateLengthFromRotation 1000회 연속 실행
+    std::vector<double> testRotations = {90.0, 180.0, 360.0, 720.0, 1800.0};
+    const int iterations = 1000;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i < iterations; ++i) {
+        double rotation = testRotations[i % testRotations.size()];
+        double length = calculator.calculateLengthFromRotation(rotation);
+        // 결과를 사용하여 최적화 방지
+        (void)length;
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    double durationMs = duration.count() / 1000.0;
+    
+    EXPECT_LT(durationMs, 100.0)
+        << "1000 iterations of calculateLengthFromRotation took " << durationMs << "ms, expected < 100ms";
+
+    // 테스트 2: calculateRotationFromLength 1000회 연속 실행
+    std::vector<double> testLengths = {0.1, 0.5, 1.0, 2.5, 5.0, 10.0};
+
+    start = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i < iterations; ++i) {
+        double length = testLengths[i % testLengths.size()];
+        double rotation = calculator.calculateRotationFromLength(length);
+        // 결과를 사용하여 최적화 방지
+        (void)rotation;
+    }
+    
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    durationMs = duration.count() / 1000.0;
+    
+    EXPECT_LT(durationMs, 100.0)
+        << "1000 iterations of calculateRotationFromLength took " << durationMs << "ms, expected < 100ms";
+
+    // 테스트 3: 혼합 계산 1000회 연속 실행 (길이→회전량→길이)
+    double testLength = 5.0;  // meters
+    
+    start = std::chrono::high_resolution_clock::now();
+    
+    double currentValue = testLength;
+    for (int i = 0; i < iterations; ++i) {
+        double rotation = calculator.calculateRotationFromLength(currentValue);
+        currentValue = calculator.calculateLengthFromRotation(rotation);
+    }
+    
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    durationMs = duration.count() / 1000.0;
+    
+    EXPECT_LT(durationMs, 100.0)
+        << "1000 iterations of mixed calculations took " << durationMs << "ms, expected < 100ms";
+    
+    // 결과가 유효한지 확인
+    double finalError = std::abs(currentValue - testLength) / testLength;
+    EXPECT_LT(finalError, 1e-5)
+        << "Result validation failed after 1000 iterations";
 }
