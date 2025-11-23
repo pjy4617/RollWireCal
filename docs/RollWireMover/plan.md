@@ -27,18 +27,18 @@
 ### 1.2 SimMotor 기본 구조 (Motor 구현체)
 - [✓] SimMotor 클래스를 생성할 수 있다
 - [✓] SimMotor는 Motor 인터페이스를 상속받는다
-- [ ] 기본 생성자로 SimMotor 객체를 생성하면 초기 회전 위치는 0이다
-- [ ] 기본 생성자로 SimMotor 객체를 생성하면 초기 상태는 정지(not running)이다
+- [✓] 기본 생성자로 SimMotor 객체를 생성하면 초기 회전 위치는 0이다
+- [✓] 기본 생성자로 SimMotor 객체를 생성하면 초기 상태는 정지(not running)이다
 
 ### 1.3 SimMotor 위치 조회 및 리셋
-- [ ] getCurrentRotation() 메서드로 현재 회전 위치를 조회할 수 있다
-- [ ] isRunning() 메서드로 모터 동작 여부를 조회할 수 있다
-- [ ] resetPosition() 메서드로 회전 위치를 0으로 초기화할 수 있다
-- [ ] resetPosition() 호출 후 getCurrentRotation()은 0을 반환한다
+- [✓] getCurrentRotation() 메서드로 현재 회전 위치를 조회할 수 있다
+- [✓] isRunning() 메서드로 모터 동작 여부를 조회할 수 있다
+- [✓] resetPosition() 메서드로 회전 위치를 0으로 초기화할 수 있다
+- [✓] resetPosition() 호출 후 getCurrentRotation()은 0을 반환한다
 
 ### 1.4 SimMotor 회전량 배열 실행
-- [ ] executeRotationProfile() 메서드가 존재한다
-- [ ] 빈 배열을 전달하면 아무 동작도 하지 않는다
+- [✓] executeRotationProfile() 메서드가 존재한다
+- [✓] 빈 배열을 전달하면 아무 동작도 하지 않는다
 - [ ] 단일 값 배열 [360.0]을 전달하면 현재 회전 위치가 360도가 된다
 - [ ] 다중 값 배열 [90.0, 180.0, 270.0]을 전달하면 마지막 값(270도)이 현재 위치가 된다
 - [ ] executeRotationProfile() 실행 중에는 isRunning()이 true를 반환한다
@@ -56,14 +56,15 @@
 
 ### 2.1 클래스 생성 및 초기화 (의존성 주입)
 - [ ] RollWireMover 클래스를 생성할 수 있다
-- [ ] wireThickness, innerRadius, Motor 포인터를 파라미터로 받는 생성자가 있다
+- [ ] wireThickness, innerRadius, Motor 포인터, ErrorCode& 출력 파라미터를 받는 생성자가 있다
 - [ ] 생성 시 내부적으로 RollWireCalculator 객체가 생성된다
 - [ ] 생성 시 Motor 포인터를 멤버 변수에 저장한다 (의존성 주입)
-- [ ] Motor 포인터가 nullptr일 때 std::invalid_argument 예외를 발생시킨다
-- [ ] wireThickness가 0일 때 예외를 발생시킨다
-- [ ] wireThickness가 음수일 때 예외를 발생시킨다
-- [ ] innerRadius가 0일 때 예외를 발생시킨다
-- [ ] innerRadius가 음수일 때 예외를 발생시킨다
+- [ ] Motor 포인터가 nullptr일 때 ErrorCode::INVALID_MOTOR_POINTER를 반환한다
+- [ ] wireThickness가 0일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
+- [ ] wireThickness가 음수일 때 ErrorCode::INVALID_WIRE_THICKNESS를 반환한다
+- [ ] innerRadius가 0일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [ ] innerRadius가 음수일 때 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [ ] 모든 파라미터가 유효할 때 ErrorCode::SUCCESS를 반환한다
 
 ### 2.2 초기 상태
 - [ ] 초기 현재 위치는 0이다 (완전히 올린 상태)
@@ -72,19 +73,21 @@
 - [ ] isMoving()은 초기에 false를 반환한다
 
 ### 2.3 모션 파라미터 설정
-- [ ] setAccelerationTime() 메서드로 가속 시간을 설정할 수 있다
-- [ ] setConstantVelocity() 메서드로 정속 속도를 설정할 수 있다
-- [ ] setDecelerationTime() 메서드로 감속 시간을 설정할 수 있다
-- [ ] setAccelerationTime()에 0 이하 값을 전달하면 예외를 발생시킨다
-- [ ] setDecelerationTime()에 0 이하 값을 전달하면 예외를 발생시킨다
-- [ ] setConstantVelocity()에 MIN_VELOCITY(0.01) 미만 값을 전달하면 예외를 발생시킨다
-- [ ] setConstantVelocity()에 MAX_VELOCITY(1.0) 초과 값을 전달하면 예외를 발생시킨다
+- [ ] setAccelerationTime() 메서드로 가속 시간을 설정할 수 있다 (ErrorCode 반환)
+- [ ] setConstantVelocity() 메서드로 정속 속도를 설정할 수 있다 (ErrorCode 반환)
+- [ ] setDecelerationTime() 메서드로 감속 시간을 설정할 수 있다 (ErrorCode 반환)
+- [ ] setAccelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_ACCELERATION_TIME을 반환한다
+- [ ] setDecelerationTime()에 0 이하 값을 전달하면 ErrorCode::INVALID_DECELERATION_TIME을 반환한다
+- [ ] setConstantVelocity()에 MIN_VELOCITY(0.01) 미만 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
+- [ ] setConstantVelocity()에 MAX_VELOCITY(1.0) 초과 값을 전달하면 ErrorCode::INVALID_VELOCITY를 반환한다
+- [ ] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
 
 ### 2.4 시스템 설정
-- [ ] setMaxWireLength() 메서드로 최대 와이어 길이를 설정할 수 있다
-- [ ] setMaxWireLength()에 0 이하 값을 전달하면 예외를 발생시킨다
-- [ ] setInnerRadius() 메서드로 롤 내경을 변경할 수 있다
-- [ ] setInnerRadius()에 0 이하 값을 전달하면 예외를 발생시킨다
+- [ ] setMaxWireLength() 메서드로 최대 와이어 길이를 설정할 수 있다 (ErrorCode 반환)
+- [ ] setMaxWireLength()에 0 이하 값을 전달하면 ErrorCode::INVALID_MAX_LENGTH를 반환한다
+- [ ] setInnerRadius() 메서드로 롤 내경을 변경할 수 있다 (ErrorCode 반환)
+- [ ] setInnerRadius()에 0 이하 값을 전달하면 ErrorCode::INVALID_INNER_RADIUS를 반환한다
+- [ ] 유효한 값 설정 시 ErrorCode::SUCCESS를 반환한다
 
 ### 2.5 상태 조회
 - [ ] getCurrentPosition() 메서드로 현재 와이어 위치를 조회할 수 있다
@@ -101,20 +104,20 @@
 ## Phase 3: 이동 제어 - 기본 동작
 
 ### 3.1 상대 이동 - 범위 검증
-- [ ] moveRelative() 메서드가 존재한다
-- [ ] moveRelative(0)을 호출하면 위치가 변하지 않는다
+- [ ] moveRelative() 메서드가 존재한다 (ErrorCode 반환)
+- [ ] moveRelative(0)을 호출하면 위치가 변하지 않고 ErrorCode::SUCCESS를 반환한다
 - [ ] moveRelative()로 음수 거리를 전달하면 올리는 동작을 시도한다 (현재 위치 감소)
 - [ ] moveRelative()로 양수 거리를 전달하면 내리는 동작을 시도한다 (현재 위치 증가)
-- [ ] 위치 0에서 moveRelative(-1.0)을 호출하면 std::out_of_range 예외를 발생시킨다
-- [ ] 위치 4.0에서 moveRelative(2.0)을 호출하면 (maxLength=5.0) std::out_of_range 예외를 발생시킨다
-- [ ] 유효한 범위 내 이동 시 예외가 발생하지 않는다
+- [ ] 위치 0에서 moveRelative(-1.0)을 호출하면 ErrorCode::OUT_OF_RANGE를 반환한다
+- [ ] 위치 4.0에서 moveRelative(2.0)을 호출하면 (maxLength=5.0) ErrorCode::OUT_OF_RANGE를 반환한다
+- [ ] 유효한 범위 내 이동 시 ErrorCode::SUCCESS를 반환한다
 
 ### 3.2 절대 이동 - 범위 검증
-- [ ] moveAbsolute() 메서드가 존재한다
-- [ ] moveAbsolute(0)을 호출하면 위치 0으로 이동한다 (완전히 올림)
-- [ ] moveAbsolute(maxWireLength)를 호출하면 최대 길이 위치로 이동한다
-- [ ] moveAbsolute()에 음수를 전달하면 std::out_of_range 예외를 발생시킨다
-- [ ] moveAbsolute()에 maxWireLength를 초과하는 값을 전달하면 std::out_of_range 예외를 발생시킨다
+- [ ] moveAbsolute() 메서드가 존재한다 (ErrorCode 반환)
+- [ ] moveAbsolute(0)을 호출하면 위치 0으로 이동하고 ErrorCode::SUCCESS를 반환한다 (완전히 올림)
+- [ ] moveAbsolute(maxWireLength)를 호출하면 최대 길이 위치로 이동하고 ErrorCode::SUCCESS를 반환한다
+- [ ] moveAbsolute()에 음수를 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
+- [ ] moveAbsolute()에 maxWireLength를 초과하는 값을 전달하면 ErrorCode::OUT_OF_RANGE를 반환한다
 - [ ] moveAbsolute()는 내부적으로 moveRelative()를 호출한다
 
 ---
@@ -251,9 +254,9 @@
 - [ ] 연속 이동 시 각 이동이 독립적으로 실행된다
 
 ### 7.4 이동 중 명령 처리
-- [ ] 이동 중(isMoving() == true) moveRelative() 호출 시 예외를 발생시킨다
-- [ ] 이동 중(isMoving() == true) moveAbsolute() 호출 시 예외를 발생시킨다
-- [ ] 이동 중 파라미터 설정(setAccelerationTime 등)은 허용된다
+- [ ] 이동 중(isMoving() == true) moveRelative() 호출 시 ErrorCode::MOTOR_BUSY를 반환한다
+- [ ] 이동 중(isMoving() == true) moveAbsolute() 호출 시 ErrorCode::MOTOR_BUSY를 반환한다
+- [ ] 이동 중 파라미터 설정(setAccelerationTime 등)은 허용되며 ErrorCode::SUCCESS를 반환한다
 
 ---
 
@@ -303,18 +306,33 @@
 
 ## Phase 9: 예외 처리 및 에지 케이스
 
-### 9.1 파라미터 유효성 검증
+### 9.1 에러 코드 시스템
+- [ ] ErrorCode enum이 정의되어 있다
+- [ ] getErrorMessage() 정적 메서드가 존재한다
+- [ ] SUCCESS 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_MOTOR_POINTER 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_WIRE_THICKNESS 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_INNER_RADIUS 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_ACCELERATION_TIME 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_DECELERATION_TIME 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_VELOCITY 에러 코드에 대한 메시지를 반환한다
+- [ ] INVALID_MAX_LENGTH 에러 코드에 대한 메시지를 반환한다
+- [ ] OUT_OF_RANGE 에러 코드에 대한 메시지를 반환한다
+- [ ] MOTOR_BUSY 에러 코드에 대한 메시지를 반환한다
+- [ ] 모든 에러 메시지는 명확하고 유용하다
+
+### 9.2 파라미터 유효성 검증
 - [ ] 모든 setter 메서드에서 유효하지 않은 값에 대해 예외를 발생시킨다
 - [ ] 예외 메시지가 명확하고 유용하다
 - [ ] 예외 발생 시 객체 상태가 변경되지 않는다
 
-### 9.2 에지 케이스
+### 9.3 에지 케이스
 - [ ] 가속 시간 = 감속 시간 = 0.001초 (최소값)으로 이동한다
 - [ ] 이동 거리 = 최대 길이(5.0m)로 이동한다
 - [ ] 속도 프로파일 생성 중 수치 오버플로우가 발생하지 않는다
 - [ ] 회전량 배열이 너무 크지 않다 (메모리 효율성)
 
-### 9.3 스레드 안전성 (선택 사항)
+### 9.4 스레드 안전성 (선택 사항)
 - [ ] 여러 스레드에서 상태 조회를 할 수 있다
 - [ ] 이동 중 다른 스레드에서 stop()을 호출할 수 있다
 - [ ] 경쟁 조건(race condition)이 발생하지 않는다

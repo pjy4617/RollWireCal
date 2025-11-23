@@ -16,3 +16,89 @@ TEST(SimMotorTest, InitialRotationPositionIsZero) {
 
     EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
 }
+
+TEST(SimMotorTest, InitialStateIsNotRunning) {
+    // 기본 생성자로 SimMotor 객체를 생성하면 초기 상태는 정지(not running)이다
+    SimMotor simMotor;
+
+    EXPECT_FALSE(simMotor.isRunning());
+}
+
+// Phase 1.3: SimMotor 위치 조회 및 리셋
+TEST(SimMotorTest, CanGetCurrentRotation) {
+    // getCurrentRotation() 메서드로 현재 회전 위치를 조회할 수 있다
+    SimMotor simMotor;
+
+    // 초기 위치는 0이어야 함
+    double rotation = simMotor.getCurrentRotation();
+    EXPECT_DOUBLE_EQ(0.0, rotation);
+}
+
+TEST(SimMotorTest, CanCheckIfMotorIsRunning) {
+    // isRunning() 메서드로 모터 동작 여부를 조회할 수 있다
+    SimMotor simMotor;
+
+    // 초기 상태는 정지 상태여야 함
+    bool running = simMotor.isRunning();
+    EXPECT_FALSE(running);
+}
+
+TEST(SimMotorTest, CanResetPosition) {
+    // resetPosition() 메서드로 회전 위치를 0으로 초기화할 수 있다
+    SimMotor simMotor;
+
+    // 위치를 변경 (executeRotationProfile을 통해)
+    std::vector<double> profile = {360.0};
+    simMotor.executeRotationProfile(profile);
+
+    // resetPosition 호출
+    simMotor.resetPosition();
+
+    // 위치가 0으로 초기화되었는지 확인
+    EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
+}
+
+TEST(SimMotorTest, GetCurrentRotationReturnsZeroAfterReset) {
+    // resetPosition() 호출 후 getCurrentRotation()은 0을 반환한다
+    SimMotor simMotor;
+
+    // 위치를 변경
+    std::vector<double> profile = {720.0};
+    simMotor.executeRotationProfile(profile);
+
+    // 리셋
+    simMotor.resetPosition();
+
+    // getCurrentRotation()이 0을 반환하는지 확인
+    EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
+}
+
+// Phase 1.4: SimMotor 회전량 배열 실행
+TEST(SimMotorTest, ExecuteRotationProfileMethodExists) {
+    // executeRotationProfile() 메서드가 존재한다
+    SimMotor simMotor;
+
+    // 메서드를 호출할 수 있으면 테스트 통과
+    std::vector<double> profile = {360.0};
+    simMotor.executeRotationProfile(profile);
+
+    // 컴파일되고 실행되면 메서드가 존재하는 것
+    SUCCEED();
+}
+
+TEST(SimMotorTest, ExecuteEmptyProfileDoesNothing) {
+    // 빈 배열을 전달하면 아무 동작도 하지 않는다
+    SimMotor simMotor;
+
+    // 초기 상태 확인
+    EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
+    EXPECT_FALSE(simMotor.isRunning());
+
+    // 빈 배열 실행
+    std::vector<double> emptyProfile;
+    simMotor.executeRotationProfile(emptyProfile);
+
+    // 상태가 변하지 않아야 함
+    EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
+    EXPECT_FALSE(simMotor.isRunning());
+}

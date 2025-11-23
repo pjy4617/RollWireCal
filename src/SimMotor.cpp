@@ -5,6 +5,11 @@ SimMotor::SimMotor()
 }
 
 void SimMotor::executeRotationProfile(const std::vector<double>& rotations) {
+    // 빈 배열이면 아무것도 하지 않음
+    if (rotations.empty()) {
+        return;
+    }
+
     // 최소 구현 - 추후 완성 예정
     profile = rotations;
     running = true;

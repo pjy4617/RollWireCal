@@ -418,3 +418,138 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationReturnsLengthFor720Degre
 
     EXPECT_NEAR(expectedLength, length, 0.00001);  // 0.01mm 오차 허용
 }
+
+TEST(RollWireCalculatorTest, RadiusIncreaseModelIsAccuratelyApplied) {
+    // 회전량에 비례한 반지름 증가 모델이 정확히 적용된다
+    // 연속 증가 모델: r(θ) = innerRadius + (θ/360) × wireThickness
+    //
+    // 이 테스트는 모델이 정확히 적용되는지 여러 각도에서 검증:
+    // 1. 0도에서 시작 반지름 = innerRadius
+    // 2. 360도에서 반지름 = innerRadius + wireThickness
+    // 3. 720도에서 반지름 = innerRadius + 2 × wireThickness
+    //
+    // 각 구간의 길이가 예상대로 계산되는지 확인
+
+    double wireThickness = 2.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 첫 번째 360도(0→360)의 길이
+    // L₁ = ∫[0→360] r(θ) × (2π/360) dθ
+    //    = (2π/360) × [innerRadius × 360 + wireThickness × 360²/(2×360)]
+    //    = 2π × innerRadius + π × wireThickness
+    double length1 = calculator.calculateLengthFromRotation(360.0);
+    double expectedLength1 = (2.0 * M_PI * innerRadius + M_PI * wireThickness) / 1000.0;
+    EXPECT_NEAR(expectedLength1, length1, 0.00001);
+
+    // 두 번째 360도(360→720)의 길이
+    // L₂ = L(720) - L(360)
+    // L(720) = (2π/360) × [innerRadius × 720 + wireThickness × 720²/(2×360)]
+    // L₂ = L(720) - L(360)
+    double length720 = calculator.calculateLengthFromRotation(720.0);
+    double length2 = length720 - length1;
+
+    // 두 번째 바퀴는 반지름이 더 크므로 첫 번째 바퀴보다 길어야 함
+    EXPECT_GT(length2, length1);
+
+    // 예상 두 번째 바퀴 길이 계산
+    // L(720) - L(360) = (2π/360) × [innerRadius × 360 + wireThickness × (720² - 360²)/(2×360)]
+    //                 = (2π/360) × [innerRadius × 360 + wireThickness × (518400 - 129600)/720]
+    //                 = (2π/360) × [innerRadius × 360 + wireThickness × 540]
+    //                 = 2π × innerRadius + 3π × wireThickness
+    double expectedLength2 = (2.0 * M_PI * innerRadius + 3.0 * M_PI * wireThickness) / 1000.0;
+    EXPECT_NEAR(expectedLength2, length2, 0.00001);
+
+    // 세 번째 360도(720→1080)의 길이
+    double length1080 = calculator.calculateLengthFromRotation(1080.0);
+    double length3 = length1080 - length720;
+
+    // 세 번째 바퀴는 두 번째 바퀴보다 더 길어야 함
+    EXPECT_GT(length3, length2);
+
+    // 예상 세 번째 바퀴 길이 계산
+    // L(1080) - L(720) = (2π/360) × [innerRadius × 360 + wireThickness × (1080² - 720²)/(2×360)]
+    //                  = (2π/360) × [innerRadius × 360 + wireThickness × (1166400 - 518400)/720]
+    //                  = (2π/360) × [innerRadius × 360 + wireThickness × 900]
+    //                  = 2π × innerRadius + 5π × wireThickness
+    double expectedLength3 = (2.0 * M_PI * innerRadius + 5.0 * M_PI * wireThickness) / 1000.0;
+    EXPECT_NEAR(expectedLength3, length3, 0.00001);
+
+    // 반지름 증가 확인: 각 바퀴의 길이 증가량이 일정한 패턴을 따름
+    // ΔL₂ - ΔL₁ = (L₂ - L₁) = 2π × wireThickness
+    // ΔL₃ - ΔL₂ = (L₃ - L₂) = 2π × wireThickness
+    double diff21 = length2 - length1;
+    double diff32 = length3 - length2;
+    double expectedDiff = (2.0 * M_PI * wireThickness) / 1000.0;
+    EXPECT_NEAR(expectedDiff, diff21, 0.00001);
+    EXPECT_NEAR(expectedDiff, diff32, 0.00001);
+}
+
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationReturnsAccurateValuesForThreeOrMoreRotations) {
+    // 3바퀴 이상의 복잡한 케이스에서 적분 또는 수치계산으로 정확한 값을 반환한다
+    // 연속 증가 모델: r(θ) = innerRadius + (θ/360) × wireThickness
+    // L = ∫[0→θ] r(t) × (2π/360) dt
+    //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+    //
+    // 다양한 회전량(3, 5, 10바퀴)에 대해 정확도 검증
+
+    double wireThickness = 1.5;  // mm
+    double innerRadius = 60.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    // 테스트 1: 3바퀴 (1080도)
+    double theta1 = 1080.0;  // degrees
+    double expectedLength1 = (2.0 * M_PI / 360.0) *
+                            (innerRadius * theta1 + wireThickness * theta1 * theta1 / (2.0 * 360.0)) / 1000.0;
+    double actualLength1 = calculator.calculateLengthFromRotation(theta1);
+    EXPECT_NEAR(expectedLength1, actualLength1, 0.00001);  // 0.01mm 오차 허용
+
+    // 테스트 2: 5바퀴 (1800도)
+    double theta2 = 1800.0;  // degrees
+    double expectedLength2 = (2.0 * M_PI / 360.0) *
+                            (innerRadius * theta2 + wireThickness * theta2 * theta2 / (2.0 * 360.0)) / 1000.0;
+    double actualLength2 = calculator.calculateLengthFromRotation(theta2);
+    EXPECT_NEAR(expectedLength2, actualLength2, 0.00001);  // 0.01mm 오차 허용
+
+    // 테스트 3: 10바퀴 (3600도)
+    double theta3 = 3600.0;  // degrees
+    double expectedLength3 = (2.0 * M_PI / 360.0) *
+                            (innerRadius * theta3 + wireThickness * theta3 * theta3 / (2.0 * 360.0)) / 1000.0;
+    double actualLength3 = calculator.calculateLengthFromRotation(theta3);
+    EXPECT_NEAR(expectedLength3, actualLength3, 0.00001);  // 0.01mm 오차 허용
+
+    // 테스트 4: 더 큰 값들에 대한 상대 오차 검증
+    // 큰 회전량에서도 적분 공식과 정확히 일치해야 함
+    double theta4 = 7200.0;  // 20바퀴
+    double expectedLength4 = (2.0 * M_PI / 360.0) *
+                            (innerRadius * theta4 + wireThickness * theta4 * theta4 / (2.0 * 360.0)) / 1000.0;
+    double actualLength4 = calculator.calculateLengthFromRotation(theta4);
+
+    // 절대 오차 검증
+    EXPECT_NEAR(expectedLength4, actualLength4, 0.00001);  // 0.01mm 오차 허용
+
+    // 상대 오차 검증 (0.001% 이내)
+    double relativeError = std::abs((actualLength4 - expectedLength4) / expectedLength4);
+    EXPECT_LT(relativeError, 1e-5);
+
+    // 테스트 5: 다른 파라미터로도 검증
+    double wireThickness5 = 2.5;  // mm
+    double innerRadius5 = 40.0;   // mm
+    RollWireCalculator calculator2(wireThickness5, innerRadius5);
+
+    double theta5 = 5400.0;  // 15바퀴
+    double expectedLength5 = (2.0 * M_PI / 360.0) *
+                            (innerRadius5 * theta5 + wireThickness5 * theta5 * theta5 / (2.0 * 360.0)) / 1000.0;
+    double actualLength5 = calculator2.calculateLengthFromRotation(theta5);
+    EXPECT_NEAR(expectedLength5, actualLength5, 0.00001);  // 0.01mm 오차 허용
+}
+
+// Phase 3.4: 입력 검증
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationThrowsExceptionWhenRotationIsNegative) {
+    // 회전량이 음수일 때 예외를 발생시킨다
+    RollWireCalculator calculator(1.0, 50.0);
+
+    EXPECT_THROW({
+        calculator.calculateLengthFromRotation(-90.0);
+    }, std::invalid_argument);
+}

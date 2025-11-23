@@ -102,6 +102,24 @@ private:
 
     // 콜백
     std::function<void()> completionCallback;  // 이동 완료 콜백
+
+    // 에러 코드 시스템
+public:
+    enum class ErrorCode {
+        SUCCESS = 0,                    // 성공
+        INVALID_MOTOR_POINTER,          // Motor 포인터가 nullptr
+        INVALID_WIRE_THICKNESS,         // 와이어 두께가 0 이하
+        INVALID_INNER_RADIUS,           // 롤 내경 반지름이 0 이하
+        INVALID_ACCELERATION_TIME,      // 가속 시간이 0 이하
+        INVALID_DECELERATION_TIME,      // 감속 시간이 0 이하
+        INVALID_VELOCITY,               // 속도가 범위 밖 (MIN_VELOCITY ~ MAX_VELOCITY)
+        INVALID_MAX_LENGTH,             // 최대 와이어 길이가 0 이하
+        OUT_OF_RANGE,                   // 이동 범위 초과
+        MOTOR_BUSY                      // 모터가 이미 동작 중
+    };
+
+    // 에러 메시지 조회
+    static std::string getErrorMessage(ErrorCode code);
 };
 ```
 
@@ -109,22 +127,22 @@ private:
 
 ```cpp
 // 생성자 (의존성 주입)
-RollWireMover(double wireThickness, double innerRadius, Motor* motor);
+RollWireMover(double wireThickness, double innerRadius, Motor* motor, ErrorCode& outError);
 
-// 모션 파라미터 설정
-void setAccelerationTime(double time);      // 가속 시간 설정 (초)
-void setConstantVelocity(double velocity);  // 정속 속도 설정 (m/s)
-void setDecelerationTime(double time);      // 감속 시간 설정 (초)
-void setVelocityProfile(ProfileType type);  // 속도 프로파일 타입 설정
+// 모션 파라미터 설정 (ErrorCode 반환)
+ErrorCode setAccelerationTime(double time);      // 가속 시간 설정 (초)
+ErrorCode setConstantVelocity(double velocity);  // 정속 속도 설정 (m/s)
+ErrorCode setDecelerationTime(double time);      // 감속 시간 설정 (초)
+ErrorCode setVelocityProfile(ProfileType type);  // 속도 프로파일 타입 설정
 
-// 시스템 설정
-void setMaxWireLength(double length);       // 최대 와이어 길이 설정 (m)
-void setInnerRadius(double radius);         // 롤 내경 변경
+// 시스템 설정 (ErrorCode 반환)
+ErrorCode setMaxWireLength(double length);       // 최대 와이어 길이 설정 (m)
+ErrorCode setInnerRadius(double radius);         // 롤 내경 변경
 
-// 이동 명령
-void moveRelative(double distance);         // 상대 이동 (음수: 올림, 양수: 내림)
-void moveAbsolute(double position);         // 절대 위치 이동 (0: 완전히 올림)
-void stop();                                // 즉시 정지
+// 이동 명령 (ErrorCode 반환)
+ErrorCode moveRelative(double distance);         // 상대 이동 (음수: 올림, 양수: 내림)
+ErrorCode moveAbsolute(double position);         // 절대 위치 이동 (0: 완전히 올림)
+ErrorCode stop();                                // 즉시 정지
 
 // 상태 조회
 double getCurrentPosition() const;          // 현재 위치 조회 (m)
@@ -133,6 +151,9 @@ bool isMoving() const;                      // 이동 중 여부
 
 // 콜백 등록
 void setCompletionCallback(std::function<void()> callback);  // 완료 콜백 등록
+
+// 에러 처리
+static std::string getErrorMessage(ErrorCode code);  // 에러 코드에 대한 설명 반환
 ```
 
 #### 3.1.4 내부 메서드
@@ -392,6 +413,38 @@ private:
 - 롤 내경 반지름 > 0
 - RollWireCalculator의 제약사항 준수
 
+### CS-4: 에러 처리
+- **에러 코드 시스템**: `ErrorCode` enum을 통해 에러 유형 정의
+- **에러 메시지**: `getErrorMessage()` 정적 메서드로 각 에러 코드에 대한 상세 설명 제공
+- **반환 방식**: 함수들은 `ErrorCode`를 반환하며, 예외를 발생시키지 않음
+- **에러 코드 종류**:
+  - `SUCCESS (0)`: 정상 실행
+  - `INVALID_MOTOR_POINTER`: Motor 포인터가 nullptr
+  - `INVALID_WIRE_THICKNESS`: 와이어 두께가 0 이하
+  - `INVALID_INNER_RADIUS`: 롤 내경 반지름이 0 이하
+  - `INVALID_ACCELERATION_TIME`: 가속 시간이 0 이하
+  - `INVALID_DECELERATION_TIME`: 감속 시간이 0 이하
+  - `INVALID_VELOCITY`: 속도가 MIN_VELOCITY ~ MAX_VELOCITY 범위 밖
+  - `INVALID_MAX_LENGTH`: 최대 와이어 길이가 0 이하
+  - `OUT_OF_RANGE`: 이동 범위 초과
+  - `MOTOR_BUSY`: 모터가 이미 동작 중
+
+**사용 예시**:
+```cpp
+// 에러 코드 기반 처리
+ErrorCode result = mover.setConstantVelocity(-0.5);  // 잘못된 속도
+if (result != ErrorCode::SUCCESS) {
+    std::string msg = RollWireMover::getErrorMessage(result);
+    std::cerr << "Error: " << msg << std::endl;
+    // 에러 처리 로직
+}
+
+// 또는 성공 여부만 확인
+if (mover.moveRelative(1.0) == ErrorCode::SUCCESS) {
+    std::cout << "이동 시작" << std::endl;
+}
+```
+
 ---
 
 ## 7. 인터페이스 명세
@@ -403,10 +456,17 @@ private:
 SimMotor* simMotor = new SimMotor();  // 시뮬레이션 모터 생성
 
 // 2. RollWireMover 객체 생성 (모터 주입)
-RollWireMover mover(1.0, 50.0, simMotor);  // 와이어 두께 1mm, 롤 내경 반지름 50mm
+ErrorCode initError;
+RollWireMover mover(1.0, 50.0, simMotor, initError);  // 와이어 두께 1mm, 롤 내경 반지름 50mm
+if (initError != ErrorCode::SUCCESS) {
+    std::cerr << "초기화 실패: " << RollWireMover::getErrorMessage(initError) << std::endl;
+    return -1;
+}
 
-// 3. 파라미터 설정
-mover.setAccelerationTime(0.5);    // 가속 시간 0.5초
+// 3. 파라미터 설정 (에러 체크)
+if (mover.setAccelerationTime(0.5) != ErrorCode::SUCCESS) {
+    std::cerr << "가속 시간 설정 실패" << std::endl;
+}
 mover.setConstantVelocity(0.5);    // 정속 속도 0.5 m/s
 mover.setDecelerationTime(0.5);    // 감속 시간 0.5초
 mover.setVelocityProfile(RollWireMover::S_CURVE);  // S-curve 프로파일
@@ -417,10 +477,15 @@ mover.setCompletionCallback([]() {
     std::cout << "이동 완료!" << std::endl;
 });
 
-// 5. 이동 명령
-mover.moveRelative(1.0);   // 1m 내림
+// 5. 이동 명령 (에러 체크)
+ErrorCode moveResult = mover.moveRelative(1.0);   // 1m 내림
+if (moveResult != ErrorCode::SUCCESS) {
+    std::cerr << "이동 실패: " << RollWireMover::getErrorMessage(moveResult) << std::endl;
+}
 // 또는
-mover.moveAbsolute(2.5);   // 절대 위치 2.5m로 이동
+if (mover.moveAbsolute(2.5) == ErrorCode::SUCCESS) {   // 절대 위치 2.5m로 이동
+    std::cout << "이동 시작" << std::endl;
+}
 
 // 6. 상태 모니터링
 while (mover.isMoving()) {

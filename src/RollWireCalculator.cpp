@@ -60,6 +60,10 @@ double RollWireCalculator::calculateRotationFromLength(double length) const {
 }
 
 double RollWireCalculator::calculateLengthFromRotation(double rotation) const {
+    if (rotation < 0.0) {
+        throw std::invalid_argument("Rotation must be non-negative");
+    }
+
     // 연속 증가 모델: r(θ) = innerRadius + (θ/360) × wireThickness
     // L = ∫[0→θ] r(t) × (2π/360) dt
     //   = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]

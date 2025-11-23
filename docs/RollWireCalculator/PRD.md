@@ -37,6 +37,16 @@ Roll Wire Calculator (RollWireCal)
 - **입력**: 롤 내경 반지름 (mm 단위)
 - **참고**: 와이어가 하나도 감기지 않은 상태의 반지름 (내경/2가 아닌 반지름 값)
 
+#### 2.1.4 에러 처리 시스템
+- **에러 코드 Enum**: `ErrorCode` 열거형을 통해 에러 코드 정의
+- **에러 설명 함수**: `getErrorMessage()` 함수로 에러 코드에 대한 설명 제공
+- **에러 코드 종류**:
+  - `SUCCESS`: 정상 실행
+  - `INVALID_WIRE_THICKNESS`: 와이어 두께가 0 이하
+  - `INVALID_INNER_RADIUS`: 롤 내경 반지름이 0 이하
+  - `INVALID_LENGTH`: 와이어 길이가 음수
+  - `INVALID_ROTATION`: 회전량이 음수
+
 ### 2.2 파라미터 및 단위
 
 #### 2.2.1 단위 체계
@@ -74,6 +84,18 @@ Roll Wire Calculator (RollWireCal)
 ### 4.1 함수 시그니처 (예시)
 
 ```cpp
+// 에러 코드 정의
+enum class ErrorCode {
+    SUCCESS = 0,
+    INVALID_WIRE_THICKNESS,
+    INVALID_INNER_RADIUS,
+    INVALID_LENGTH,
+    INVALID_ROTATION
+};
+
+// 에러 코드 설명 함수
+const char* getErrorMessage(ErrorCode code);
+
 class RollWireCalculator {
 private:
     double wireThickness;   // mm - 와이어 두께
@@ -133,6 +155,11 @@ public:
 - 회전량 0도는 와이어가 완전히 감긴 상태
 - 롤의 내경은 양수여야 함
 - 와이어 두께는 양수여야 함
+
+### 5.3 에러 처리 제약사항
+- 예외 발생 시 Enum 기반 에러 코드로 처리
+- 모든 에러 코드에 대한 설명 메시지 제공
+- 에러 메시지는 한글 또는 영문으로 명확하게 작성
 
 ## 6. 품질 요구사항
 
