@@ -1,14 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project(RollWireCalculator)
-
-# C++ 표준 설정
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# GoogleTest 찾기
-find_package(PkgConfig)
-pkg_check_modules(GTEST REQUIRED gtest_main gtest)
-include_directories(${GTEST_INCLUDE_DIRS})
+# RollWireCalculator 서브프로젝트
+# GoogleTest는 루트 CMakeLists.txt에서 이미 설정됨
 
 # 라이브러리
 add_library(rollwirecalculator
@@ -32,8 +23,7 @@ add_executable(rollwirecalculator_test
 
 target_link_libraries(rollwirecalculator_test
   rollwirecalculator
-  ${GTEST_LDFLAGS}
-  pthread
+  GTest::gtest_main
 )
 
 # Coverage 플래그 추가
