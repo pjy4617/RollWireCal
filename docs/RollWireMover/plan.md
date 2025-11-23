@@ -39,7 +39,7 @@
 ### 1.4 SimMotor 회전량 배열 실행
 - [✓] executeRotationProfile() 메서드가 존재한다
 - [✓] 빈 배열을 전달하면 아무 동작도 하지 않는다
-- [ ] 단일 값 배열 [360.0]을 전달하면 현재 회전 위치가 360도가 된다
+- [✓] 단일 값 배열 [360.0]을 전달하면 현재 회전 위치가 360도가 된다
 - [ ] 다중 값 배열 [90.0, 180.0, 270.0]을 전달하면 마지막 값(270도)이 현재 위치가 된다
 - [ ] executeRotationProfile() 실행 중에는 isRunning()이 true를 반환한다
 - [ ] executeRotationProfile() 완료 후에는 isRunning()이 false를 반환한다

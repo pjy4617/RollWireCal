@@ -102,3 +102,15 @@ TEST(SimMotorTest, ExecuteEmptyProfileDoesNothing) {
     EXPECT_DOUBLE_EQ(0.0, simMotor.getCurrentRotation());
     EXPECT_FALSE(simMotor.isRunning());
 }
+
+TEST(SimMotorTest, ExecuteSingleValueProfileSetsRotationTo360) {
+    // 단일 값 배열 [360.0]을 전달하면 현재 회전 위치가 360도가 된다
+    SimMotor simMotor;
+
+    // 단일 값 배열 실행
+    std::vector<double> profile = {360.0};
+    simMotor.executeRotationProfile(profile);
+
+    // 현재 회전 위치가 360도가 되어야 함
+    EXPECT_DOUBLE_EQ(360.0, simMotor.getCurrentRotation());
+}

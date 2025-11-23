@@ -10,9 +10,11 @@ void SimMotor::executeRotationProfile(const std::vector<double>& rotations) {
         return;
     }
 
-    // 최소 구현 - 추후 완성 예정
+    // 프로파일 저장 및 마지막 회전 위치로 이동
+    // 현재는 즉시 완료되는 단순 구현
     profile = rotations;
-    running = true;
+    currentRotation = rotations.back();
+    running = false;
 }
 
 void SimMotor::stop() {
