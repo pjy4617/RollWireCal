@@ -586,3 +586,43 @@ TEST(RollWireCalculatorTest, CalculateLengthFromRotationWorksWithVerySmallRotati
     // 결과가 유한한 값이어야 함 (수치적 안정성)
     EXPECT_TRUE(std::isfinite(length));
 }
+
+TEST(RollWireCalculatorTest, CalculateLengthFromRotationWorksWithVeryLargeRotation) {
+    // 매우 큰 회전량(36000도)에서 올바르게 동작한다
+    double wireThickness = 1.0;  // mm
+    double innerRadius = 50.0;   // mm
+    RollWireCalculator calculator(wireThickness, innerRadius);
+
+    double veryLargeRotation = 36000.0;  // degrees (100바퀴)
+
+    // 매우 큰 회전량에 대해 길이를 계산
+    // 연속 증가 모델: r(θ) = innerRadius + θ/360 × wireThickness
+    // L = (2π/360) × [innerRadius × θ + wireThickness × θ²/(2×360)]
+    // L = (2π/360) × [50 × 36000 + 1.0 × 36000²/(2×360)] / 1000
+    // L = (2π/360) × [1,800,000 + 1,800,000] / 1000
+    // L = (2π/360) × 3,600,000 / 1000 ≈ 62.83m
+
+    double length = calculator.calculateLengthFromRotation(veryLargeRotation);
+
+    // 양수여야 함
+    EXPECT_GT(length, 0.0);
+
+    // 예상 길이 계산 (정확한 공식 사용)
+    double theta = veryLargeRotation;  // degrees
+    double expectedLength = (2.0 * M_PI / 360.0) *
+                           (innerRadius * theta + wireThickness * theta * theta / (2.0 * 360.0)) / 1000.0;
+
+    // 정확한 값과 가까워야 함 (0.01m = 10mm 오차 허용)
+    EXPECT_NEAR(expectedLength, length, 0.01);
+
+    // 결과가 유한한 값이어야 함 (수치적 안정성)
+    EXPECT_TRUE(std::isfinite(length));
+
+    // 합리적인 범위 검증 (100바퀴, 반지름 50~149mm, 대략 62~63m 예상)
+    EXPECT_GT(length, 60.0);  // 최소 60m 이상
+    EXPECT_LT(length, 65.0);  // 최대 65m 미만
+
+    // 상대 오차 검증 (0.01% 이내)
+    double relativeError = std::abs((length - expectedLength) / expectedLength);
+    EXPECT_LT(relativeError, 1e-4);
+}
