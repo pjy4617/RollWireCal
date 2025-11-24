@@ -863,3 +863,175 @@ TEST(RollWireMoverTest, ConstantVelocityPhaseHasCorrectVelocity) {
   }
 }
 
+TEST(RollWireMoverTest, ConstantVelocityPhaseTimeMatchesExpectedDuration) {
+  // 정속 구간 시간 = (총 거리 - 가감속 거리) / constantVelocity
+  SimMotor simMotor;
+  Motor *motor = &simMotor;
+
+  RollWireMover::ErrorCode error;
+  RollWireMover mover(1.0, 50.0, motor, error);
+
+  // TRAPEZOID 프로파일 설정
+  mover.setVelocityProfile(RollWireMover::ProfileType::TRAPEZOID);
+  double accelTime = 0.1;   // 100ms 가속
+  double velocity = 0.5;    // 0.5 m/s 정속
+  double decelTime = 0.1;   // 100ms 감속
+  mover.setAccelerationTime(accelTime);
+  mover.setConstantVelocity(velocity);
+  mover.setDecelerationTime(decelTime);
+
+  // 이동 거리 계산
+  double totalDistance = 0.2; // 200mm
+  double accelDistance = 0.5 * velocity * accelTime; // 0.5 * 0.5 * 0.1 = 0.025m
+  double decelDistance = 0.5 * velocity * decelTime; // 0.5 * 0.5 * 0.1 = 0.025m
+  double constantDistance = totalDistance - accelDistance - decelDistance; // 0.15m
+  double expectedConstantTime = constantDistance / velocity; // 0.15 / 0.5 = 0.3s
+
+  // 이동 실행
+  mover.moveRelative(totalDistance);
+
+  // 생성된 속도 프로파일 가져오기
+  const std::vector<double> &velocityProfile = mover.getLastVelocityProfile();
+
+  // 프로파일이 비어있지 않아야 함
+  ASSERT_FALSE(velocityProfile.empty());
+
+  // 정속 구간 찾기 (constantVelocity에 도달한 구간)
+  int constantStartIndex = -1;
+  int constantEndIndex = -1;
+  
+  for (size_t i = 0; i < velocityProfile.size(); ++i) {
+    if (std::abs(velocityProfile[i] - velocity) < 0.001) {
+      if (constantStartIndex == -1) {
+        constantStartIndex = i;
+      }
+      constantEndIndex = i;
+    } else if (constantStartIndex != -1 && velocityProfile[i] < velocity - 0.001) {
+      // 감속 시작
+      break;
+    }
+  }
+
+  // 정속 구간이 존재해야 함
+  ASSERT_NE(constantStartIndex, -1);
+  ASSERT_NE(constantEndIndex, -1);
+  
+  // 정속 구간 시간 계산 (1ms 간격)
+  double actualConstantTime = (constantEndIndex - constantStartIndex + 1) * 0.001;
+
+  // 예상 정속 시간과 일치해야 함
+  EXPECT_NEAR(expectedConstantTime, actualConstantTime, 0.005); // ±5ms 허용 오차
+}
+
+// Phase 4.4: Trapezoid 프로파일 - 감속 구간
+TEST(RollWireMoverTest, DecelerationPhaseVelocityDecreasesLinearly) {
+  // 감속 구간의 속도는 선형적으로 감소한다
+  SimMotor simMotor;
+  Motor *motor = &simMotor;
+
+  RollWireMover::ErrorCode error;
+  RollWireMover mover(1.0, 50.0, motor, error);
+
+  // TRAPEZOID 프로파일 설정
+  mover.setVelocityProfile(RollWireMover::ProfileType::TRAPEZOID);
+  double accelTime = 0.15;
+  double velocity = 0.4;
+  double decelTime = 0.2; // 200ms 감속
+  mover.setAccelerationTime(accelTime);
+  mover.setConstantVelocity(velocity);
+  mover.setDecelerationTime(decelTime);
+
+  // 충분히 긴 거리 이동 (정속 구간 포함)
+  mover.moveRelative(0.15);
+
+  // 생성된 속도 프로파일 가져오기
+  const std::vector<double> &velocityProfile = mover.getLastVelocityProfile();
+
+  // 프로파일이 비어있지 않아야 함
+  ASSERT_FALSE(velocityProfile.empty());
+
+  // 감속 구간 찾기 (constantVelocity에서 0으로 감소하는 구간)
+  int decelStartIndex = -1;
+  for (size_t i = 0; i < velocityProfile.size() - 1; ++i) {
+    // 정속에서 감속 시작하는 시점
+    if (std::abs(velocityProfile[i] - velocity) < 0.001 && 
+        velocityProfile[i + 1] < velocity - 0.001) {
+      decelStartIndex = i + 1;
+      break;
+    }
+  }
+
+  ASSERT_NE(decelStartIndex, -1) << "감속 구간을 찾을 수 없습니다";
+
+  // 감속 구간 샘플 수
+  int decelSamples = static_cast<int>(decelTime * 1000);
+  int decelEndIndex = decelStartIndex + decelSamples;
+
+  // 감속 구간이 충분히 있어야 함
+  ASSERT_LE(decelEndIndex, static_cast<int>(velocityProfile.size()));
+
+  // 감속 구간에서 속도가 선형적으로 감소하는지 검증
+  // 선형성 검증: 연속된 속도 차이가 일정해야 함
+  double expectedDeltaV = -velocity / decelSamples;
+  for (int i = decelStartIndex + 1; i < decelEndIndex && i < static_cast<int>(velocityProfile.size()); ++i) {
+    double deltaV = velocityProfile[i] - velocityProfile[i - 1];
+    // 허용 오차 내에서 일정한 감소율
+    EXPECT_NEAR(expectedDeltaV, deltaV, 0.001) << "at index " << i;
+  }
+}
+
+TEST(RollWireMoverTest, DecelerationPhaseTimeMatchesSetDecelerationTime) {
+  // 감속 구간의 시간은 설정한 decelerationTime과 일치한다
+  SimMotor simMotor;
+  Motor *motor = &simMotor;
+
+  RollWireMover::ErrorCode error;
+  RollWireMover mover(1.0, 50.0, motor, error);
+
+  // TRAPEZOID 프로파일 설정
+  mover.setVelocityProfile(RollWireMover::ProfileType::TRAPEZOID);
+  double accelTime = 0.1;   // 100ms 가속
+  double velocity = 0.5;    // 0.5 m/s 정속
+  double decelTime = 0.18;  // 180ms 감속
+  mover.setAccelerationTime(accelTime);
+  mover.setConstantVelocity(velocity);
+  mover.setDecelerationTime(decelTime);
+
+  // 충분히 긴 거리 이동 (정속 구간 포함)
+  mover.moveRelative(0.15);
+
+  // 생성된 속도 프로파일 가져오기
+  const std::vector<double> &velocityProfile = mover.getLastVelocityProfile();
+
+  // 프로파일이 비어있지 않아야 함
+  ASSERT_FALSE(velocityProfile.empty());
+
+  // 감속 구간 찾기 (constantVelocity에서 0으로 감소하는 구간)
+  int decelStartIndex = -1;
+  for (size_t i = 0; i < velocityProfile.size() - 1; ++i) {
+    // 정속에서 감속 시작하는 시점
+    if (std::abs(velocityProfile[i] - velocity) < 0.001 &&
+        velocityProfile[i + 1] < velocity - 0.001) {
+      decelStartIndex = i + 1;
+      break;
+    }
+  }
+
+  ASSERT_NE(decelStartIndex, -1) << "감속 구간을 찾을 수 없습니다";
+
+  // 감속 구간의 끝 찾기 (속도가 0에 도달하는 시점)
+  int decelEndIndex = velocityProfile.size() - 1;
+  for (size_t i = decelStartIndex; i < velocityProfile.size(); ++i) {
+    if (velocityProfile[i] <= 0.001) {
+      decelEndIndex = i;
+      break;
+    }
+  }
+
+  // 감속 구간 시간 계산 (1ms 간격)
+  double actualDecelTime = (decelEndIndex - decelStartIndex + 1) * 0.001;
+
+  // 설정한 감속 시간과 일치해야 함
+  EXPECT_NEAR(decelTime, actualDecelTime, 0.002); // ±2ms 허용 오차
+}
+

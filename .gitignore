@@ -45,3 +45,5 @@ build/
 Build/
 build*/
 Lib/*/build/
+.cache/
+.history/
