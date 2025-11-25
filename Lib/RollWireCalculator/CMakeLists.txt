@@ -34,3 +34,20 @@ endif()
 
 include(GoogleTest)
 gtest_discover_tests(rollwirecalculator_test)
+
+# 예제 실행 파일
+add_executable(basic_usage
+  examples/basic_usage.cpp
+)
+
+target_link_libraries(basic_usage
+  rollwirecalculator
+)
+
+add_executable(inner_radius_change
+  examples/inner_radius_change.cpp
+)
+
+target_link_libraries(inner_radius_change
+  rollwirecalculator
+)
