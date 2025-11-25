@@ -8,17 +8,6 @@ project(RollWireMover)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# GoogleTest 설정
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/release-1.12.1.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
-
 # 소스 파일
 set(SOURCES
     src/SimMotor.cpp
@@ -30,6 +19,14 @@ include_directories(include)
 
 # 라이브러리 생성
 add_library(rollwiremover ${SOURCES})
+
+# RollWireCalculator 라이브러리 링크
+target_link_libraries(rollwiremover PUBLIC rollwirecalculator)
+
+# RollWireCalculator의 헤더 포함 경로 추가
+target_include_directories(rollwiremover PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../RollWireCalculator/include
+)
 
 # Coverage 플래그 추가
 if(ENABLE_COVERAGE)

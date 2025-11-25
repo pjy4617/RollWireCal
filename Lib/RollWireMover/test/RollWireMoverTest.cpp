@@ -1035,3 +1035,33 @@ TEST(RollWireMoverTest, DecelerationPhaseTimeMatchesSetDecelerationTime) {
   EXPECT_NEAR(decelTime, actualDecelTime, 0.002); // ±2ms 허용 오차
 }
 
+TEST(RollWireMoverTest, DecelerationPhaseEndsWithZeroVelocity) {
+  // 감속 구간 종료 시 속도는 0이 된다
+  SimMotor simMotor;
+  Motor *motor = &simMotor;
+
+  RollWireMover::ErrorCode error;
+  RollWireMover mover(1.0, 50.0, motor, error);
+
+  // TRAPEZOID 프로파일 설정
+  mover.setVelocityProfile(RollWireMover::ProfileType::TRAPEZOID);
+  double accelTime = 0.1;   // 100ms 가속
+  double velocity = 0.5;    // 0.5 m/s 정속
+  double decelTime = 0.1;   // 100ms 감속
+  mover.setAccelerationTime(accelTime);
+  mover.setConstantVelocity(velocity);
+  mover.setDecelerationTime(decelTime);
+
+  // 충분히 긴 거리 이동
+  mover.moveRelative(0.1);
+
+  // 생성된 속도 프로파일 가져오기
+  const std::vector<double> &velocityProfile = mover.getLastVelocityProfile();
+
+  // 프로파일이 비어있지 않아야 함
+  ASSERT_FALSE(velocityProfile.empty());
+
+  // 프로파일의 마지막 속도는 0이어야 함
+  EXPECT_NEAR(0.0, velocityProfile.back(), 0.001);
+}
+
